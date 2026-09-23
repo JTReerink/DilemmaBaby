@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomy Baby — Installation Portal</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    .portal-container {
+      max-width: 960px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 60px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .portal-hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .portal-badge {
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    .portal-title {
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #fff, var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .portal-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 620px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .station-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .station-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 20px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--trans-smooth);
+    }
+
+    .station-card:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 210, 255, 0.15);
+      background: var(--bg-surface-elevated);
+    }
+
+    .station-num {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    .station-name {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .station-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .host-banner-card {
+      background: linear-gradient(135deg, rgba(14, 18, 26, 0.9) 0%, rgba(21, 27, 39, 0.9) 100%);
+      border: 1px solid var(--accent-cyan-glow);
+      border-radius: 16px;
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-decoration: none;
+      color: inherit;
+      transition: all var(--trans-smooth);
+    }
+
+    .host-banner-card:hover {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 24px var(--accent-cyan-glow);
+      transform: translateY(-2px);
+    }
+
+    .network-info-box {
+      margin-top: 36px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 850px) {
+      .station-grid {
+        grid-template-columns: 1fr;
+      }
+      .host-banner-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <div class="portal-container">
+    <div class="portal-hero">
+      <span class="badge portal-badge">AHK Society 5.0 • Installation Launchpad</span>
+      <h1 class="portal-title">Autonomy Baby</h1>
+      <p class="portal-subtitle">
+        Exhibition Theme: <strong>"Reimagining Autonomy"</strong>.<br>
+        Launch the participant interfaces on the outward-facing table displays, or open the facilitator control center.
+      </p>
+    </div>
+
+    <!-- 3 Participant Displays -->
+    <div class="station-grid">
+      <a href="screen.html?id=1" target="_blank" class="station-card">
+        <div>
+          <span class="station-num">POSITION 01</span>
+          <h2 class="station-name">Screen 1</h2>
+        </div>
+        <p class="station-desc">
+          Outward-facing monitor 1. Displays the case directive with specialized situational observations.
+        </p>
+        <span class="btn btn-primary" style="align-self: flex-start;">Launch Screen 1 ↗</span>
+      </a>
+
+      <a href="screen.html?id=2" target="_blank" class="station-card">
+        <div>
+          <span class="station-num">POSITION 02</span>
+          <h2 class="station-name">Screen 2</h2>
+        </div>
+        <p class="station-desc">
+          Outward-facing monitor 2. Displays the case directive with specialized situational observations.
+        </p>
+        <span class="btn btn-primary" style="align-self: flex-start;">Launch Screen 2 ↗</span>
+      </a>
+
+      <a href="screen.html?id=3" target="_blank" class="station-card">
+        <div>
+          <span class="station-num">POSITION 03</span>
+          <h2 class="station-name">Screen 3</h2>
+        </div>
+        <p class="station-desc">
+          Outward-facing monitor 3. Displays the case directive with specialized situational observations.
+        </p>
+        <span class="btn btn-primary" style="align-self: flex-start;">Launch Screen 3 ↗</span>
+      </a>
+    </div>
+
+    <!-- Host Dashboard Banner -->
+    <a href="host.html" target="_blank" class="host-banner-card">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+          <span class="badge" style="color: var(--accent-cyan); border-color: var(--accent-cyan);">Facilitator Control</span>
+          <h2 style="font-size: 1.3rem; font-weight: 700;">Host &amp; Prompt Admin Console</h2>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary);">
+          Experience reset, 0–10 happiness gauge, Web Serial Arduino LED bridge, live voting matrix, and full Dilemma Editor.
+        </p>
+      </div>
+      <span class="btn btn-primary">Open Host Console ↗</span>
+    </a>
+
+    <!-- Local Network Info -->
+    <div class="network-info-box">
+      <span>MULTI-DEVICE NETWORK URLS:</span>
+      <span id="network-ips">Loading local IPs...</span>
+    </div>
+  </div>
+
+  <script>
+    fetch('/api/network-info')
+      .then(r => r.json())
+      .then(data => {
+        const el = document.getElementById('network-ips');
+        if (data.localIps && data.localIps.length > 0) {
+          el.innerHTML = data.localIps.map(ip => `<a href="http://${ip}:${data.port}" target="_blank" style="color:var(--accent-cyan); margin-left:8px;">http://${ip}:${data.port}</a>`).join(' | ');
+        } else {
+          el.textContent = 'http://localhost:' + (data.port || 3000);
+        }
+      })
+      .catch(() => {
+        document.getElementById('network-ips').textContent = 'http://localhost:3000';
+      });
+  </script>
+</body>
+</html>

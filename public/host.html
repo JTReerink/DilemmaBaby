@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomy Baby — Facilitator & Admin Console</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/host.css">
+</head>
+<body data-mood="neutral">
+  <div class="ambient-glow"></div>
+
+  <div class="host-container">
+    <!-- Top Navigation & Brand -->
+    <header class="host-header">
+      <div class="brand-section">
+        <div class="app-logo">AB</div>
+        <div class="title-group">
+          <h1>AUTONOMY BABY // FACILITATOR DASHBOARD</h1>
+          <span>EXHIBITION: REIMAGINING AUTONOMY • AHK SOCIETY 5.0</span>
+        </div>
+      </div>
+
+      <!-- Tab Switcher -->
+      <nav class="tab-nav">
+        <button class="tab-btn active" id="tab-live">Live Facilitation</button>
+        <button class="tab-btn" id="tab-editor">Dilemmas &amp; Prompts (Admin)</button>
+      </nav>
+
+      <!-- Emergency Reset Button -->
+      <div class="header-actions">
+        <button class="btn btn-danger" id="btn-reset-experience">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Reset Experience
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: LIVE FACILITATION VIEW                                         -->
+    <!-- ===================================================================== -->
+    <main class="host-grid" id="view-live">
+      
+      <!-- LEFT COLUMN: Happiness Master & Custodian Matrix -->
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        
+        <!-- Infant Vital Happiness Gauge -->
+        <section class="panel-card">
+          <div class="panel-title">
+            <span>Infant Vital Harmony</span>
+            <span class="badge">Scale 0 - 10</span>
+          </div>
+
+          <div class="happiness-gauge-box">
+            <div class="happiness-value-circle" id="happiness-circle">
+              <span class="happiness-number" id="happiness-number">5</span>
+              <span class="happiness-scale">/ 10</span>
+            </div>
+            <div class="happiness-mood-label" id="happiness-mood-label">Neutral Equilibrium</div>
+            <div class="happiness-mood-sub" id="happiness-mood-sub">Steady baseline telemetry</div>
+          </div>
+
+          <!-- Quick Steppers & Slider -->
+          <div class="happiness-steppers">
+            <button class="btn" id="btn-dec-happiness">-1 Distress</button>
+            <button class="btn" id="btn-inc-happiness">+1 Harmony</button>
+          </div>
+
+          <div class="happiness-slider-group">
+            <input type="range" min="0" max="10" step="1" value="5" class="happiness-slider" id="happiness-slider">
+          </div>
+        </section>
+
+        <!-- Live Custodian Voting Matrix -->
+        <section class="panel-card">
+          <div class="panel-title">
+            <span>Custodian Status</span>
+            <span class="badge" id="current-case-badge">Case 1</span>
+          </div>
+
+          <div class="custodian-matrix">
+            <div class="custodian-slot">
+              <span class="custodian-header">Screen 1</span>
+              <div class="custodian-vote-pill" id="custodian-vote-1">Awaiting...</div>
+            </div>
+            <div class="custodian-slot">
+              <span class="custodian-header">Screen 2</span>
+              <div class="custodian-vote-pill" id="custodian-vote-2">Awaiting...</div>
+            </div>
+            <div class="custodian-slot">
+              <span class="custodian-header">Screen 3</span>
+              <div class="custodian-vote-pill" id="custodian-vote-3">Awaiting...</div>
+            </div>
+          </div>
+
+          <div id="matrix-status-banner" style="font-size: 0.85rem; font-family: var(--font-mono); margin-top: 4px;">
+            Awaiting participant decisions...
+          </div>
+
+          <!-- Auto-Advance Settings & Live Countdown Widget -->
+          <div style="margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="panel-title" style="margin: 0; font-size: 0.72rem;">Auto-Continue Timer</span>
+              <select class="form-input" id="select-auto-advance" style="padding: 4px 8px; font-size: 0.78rem; width: auto;">
+                <option value="5">5 Seconds</option>
+                <option value="8" selected>8 Seconds (Default)</option>
+                <option value="12">12 Seconds</option>
+                <option value="15">15 Seconds</option>
+                <option value="0">Manual (Off)</option>
+              </select>
+            </div>
+
+            <!-- Active Countdown Status on Host -->
+            <div id="host-countdown-card" style="display: none; background: rgba(0, 210, 255, 0.08); border: 1px solid var(--accent-cyan); border-radius: 8px; padding: 8px 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-family: var(--font-mono); margin-bottom: 6px;">
+                <span>Advancing to next case in <strong id="host-countdown-sec" style="color: var(--accent-cyan);">8s</strong>...</span>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-primary" id="btn-skip-countdown" style="padding: 2px 8px; font-size: 0.7rem;">Skip ⏩</button>
+                  <button class="btn" id="btn-pause-countdown" style="padding: 2px 8px; font-size: 0.7rem;">Pause ⏸️</button>
+                </div>
+              </div>
+              <div style="width: 100%; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 2px; overflow: hidden;">
+                <div id="host-countdown-bar" style="height: 100%; width: 100%; background: var(--accent-cyan); transition: width 0.15s linear;"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- CENTER COLUMN: Active Directive Inspector & Facilitator Controls -->
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        <section class="panel-card" style="flex: 1;">
+          <div class="active-case-header">
+            <div class="panel-title">Active Directive Inspector</div>
+            <div class="case-navigation">
+              <button class="btn" id="btn-prev-case">← Previous</button>
+              <button class="btn" id="btn-next-case">Next Directive →</button>
+            </div>
+          </div>
+
+          <!-- Scenario Briefing -->
+          <div class="case-preview-card">
+            <h2 class="case-preview-title" id="inspector-title">Loading...</h2>
+            <p class="case-preview-context" id="inspector-context">Scenario description...</p>
+          </div>
+
+          <!-- Tri-Perspective Comparison (Visible to Host) -->
+          <div class="panel-title" style="margin-top: 8px;">Tri-Screen Perspective Divergence</div>
+          <div class="tri-perspective-grid">
+            <div class="perspective-preview">
+              <span class="perspective-tag">Screen 1 (Ecological)</span>
+              <p class="perspective-body" id="inspector-p1">Loading...</p>
+            </div>
+            <div class="perspective-preview">
+              <span class="perspective-tag">Screen 2 (Social Triage)</span>
+              <p class="perspective-body" id="inspector-p2">Loading...</p>
+            </div>
+            <div class="perspective-preview">
+              <span class="perspective-tag">Screen 3 (Autonomy)</span>
+              <p class="perspective-body" id="inspector-p3">Loading...</p>
+            </div>
+          </div>
+
+          <!-- Options -->
+          <div class="panel-title" style="margin-top: 8px;">Decision Options</div>
+          <div class="choice-preview-grid">
+            <div class="choice-preview-box">
+              <strong style="color: var(--accent-cyan);">Option [A]</strong>
+              <span id="inspector-opt-a">Authorize</span>
+            </div>
+            <div class="choice-preview-box">
+              <strong style="color: var(--warning-amber);">Option [B]</strong>
+              <span id="inspector-opt-b">Decline</span>
+            </div>
+          </div>
+
+          <!-- Quick Facilitation Actions -->
+          <div style="margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 16px;">
+            <div style="display: flex; gap: 12px; margin-bottom: 6px;">
+              <button class="btn" id="btn-reopen-voting" style="flex: 1;">
+                🔄 Reopen Voting
+              </button>
+              <button class="btn btn-primary" id="btn-force-reveal" style="flex: 1;">
+                👁️ Force Reveal Outcome
+              </button>
+            </div>
+            <span style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);">
+              * Note: If one or two screens have not answered, Force Reveal evaluates consensus solely from submitted votes (e.g. 2 votes for A and 1 non-answer = Consensus A).
+            </span>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT COLUMN: Arduino Web Serial Bridge & Audio FX -->
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        
+        <!-- Arduino USB Serial Manager -->
+        <section class="panel-card">
+          <div class="panel-title">
+            <span>Arduino LED Bridge</span>
+            <div class="serial-status-indicator">
+              <span class="status-dot" id="serial-status-dot"></span>
+              <span id="serial-status-text" style="font-family: var(--font-mono); font-size: 0.75rem;">Disconnected</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <select class="form-input" id="serial-baud" style="flex: 1; padding: 6px 10px; font-size: 0.8rem;">
+              <option value="9600" selected>9600 Baud</option>
+              <option value="115200">115200 Baud</option>
+            </select>
+            <button class="btn btn-primary" id="btn-serial-connect" style="flex: 2; padding: 8px;">
+              Connect Arduino
+            </button>
+            <button class="btn btn-danger" id="btn-serial-disconnect" style="display: none; flex: 2; padding: 8px;">
+              Disconnect
+            </button>
+          </div>
+
+          <div class="serial-log" id="serial-log">
+            <div>[SERIAL] Ready to connect over Web Serial API...</div>
+          </div>
+
+          <div class="panel-title" style="margin-top: 4px; font-size: 0.7rem;">Test Hardware Colors</div>
+          <div class="serial-test-buttons">
+            <button class="btn" id="btn-test-red" style="color: var(--distress-red);">Red</button>
+            <button class="btn" id="btn-test-neutral" style="color: var(--accent-cyan);">Cyan</button>
+            <button class="btn" id="btn-test-green" style="color: var(--happy-green);">Green</button>
+          </div>
+        </section>
+
+        <!-- Ambient Biometric Sound Controls -->
+        <section class="panel-card">
+          <div class="panel-title">
+            <span>Biometric Sound Engine</span>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; text-transform: none; cursor: pointer;">
+              <input type="checkbox" id="toggle-mute"> Mute
+            </label>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+            <button class="btn" id="btn-sound-heartbeat">🔊 Play Heartbeat (Lub-Dub)</button>
+            <button class="btn" id="btn-sound-coo">👶 Play Contentment Vocal</button>
+            <button class="btn" id="btn-sound-cry">😢 Play Distress Whimper</button>
+          </div>
+        </section>
+      </div>
+
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: DILEMMA & PROMPT CMS EDITOR (ADMIN)                            -->
+    <!-- ===================================================================== -->
+    <main class="editor-container" id="view-editor" style="display: none;">
+      
+      <!-- Dilemma Catalog Navigation -->
+      <aside class="dilemma-list-pane">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="panel-title" style="margin: 0;">Case Catalog</div>
+          <button class="btn btn-primary" id="btn-new-case" style="padding: 6px 12px; font-size: 0.8rem;">
+            + Add Case
+          </button>
+        </div>
+
+        <div class="dilemma-list" id="dilemma-list">
+          <!-- Dynamically populated -->
+        </div>
+      </aside>
+
+      <!-- Active Case Form Editor -->
+      <section class="editor-form-pane">
+        
+        <div class="form-group">
+          <label class="form-label" for="edit-title">Directive Title</label>
+          <input type="text" class="form-input" id="edit-title" placeholder="e.g. Directive 01: The Synthetic Cardiopulmonary Unit">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-context">Core Context &amp; Infant Condition (Shared Across All Screens)</label>
+          <textarea class="form-textarea" id="edit-context" rows="3" placeholder="Describe the baseline clinical or ethical situation..."></textarea>
+        </div>
+
+        <!-- 3 Perspectives -->
+        <div class="form-group">
+          <label class="form-label" for="edit-p1">Screen 1 Specific Finding (e.g. Ecological / Resource Impact)</label>
+          <textarea class="form-textarea" id="edit-p1" rows="3" placeholder="Consequence observed only on Screen 1..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-p2">Screen 2 Specific Finding (e.g. Social Triage / Human Impact)</label>
+          <textarea class="form-textarea" id="edit-p2" rows="3" placeholder="Consequence observed only on Screen 2..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="edit-p3">Screen 3 Specific Finding (e.g. Autonomy / Algorithmic Servitude)</label>
+          <textarea class="form-textarea" id="edit-p3" rows="3" placeholder="Consequence observed only on Screen 3..."></textarea>
+        </div>
+
+        <!-- Options A and B -->
+        <div class="options-edit-grid">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label class="form-label" style="color: var(--accent-cyan);">Option [A] Labels</label>
+            <input type="text" class="form-input" id="edit-opt-a-label" placeholder="Option A Name (e.g. Authorize)">
+            <input type="text" class="form-input" id="edit-opt-a-sub" placeholder="Option A Description / Subtext">
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label class="form-label" style="color: var(--warning-amber);">Option [B] Labels</label>
+            <input type="text" class="form-input" id="edit-opt-b-label" placeholder="Option B Name (e.g. Decline)">
+            <input type="text" class="form-input" id="edit-opt-b-sub" placeholder="Option B Description / Subtext">
+          </div>
+        </div>
+
+        <!-- Editor Action Bar -->
+        <div class="editor-action-bar">
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-danger" id="btn-delete-case">Delete Case</button>
+            <button class="btn" id="btn-duplicate-case">Duplicate Case</button>
+          </div>
+
+          <button class="btn btn-success" id="btn-save-cases" style="padding: 12px 24px; font-size: 0.95rem;">
+            💾 Save All Changes &amp; Synchronize Screens
+          </button>
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="js/audio.js"></script>
+  <script src="js/serial.js"></script>
+  <script src="js/host.js"></script>
+</body>
+</html>

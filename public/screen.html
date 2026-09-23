@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomy Baby — Directive Interface</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/screen.css">
+</head>
+<body data-mood="neutral">
+  <div class="ambient-glow"></div>
+
+  <main class="screen-container">
+    <!-- Header -->
+    <header class="screen-header">
+      <div class="protocol-tag">
+        <span class="system-title">REIMAGINING AUTONOMY // BIO-ETHICS DIRECTIVE</span>
+        <h1 class="case-id" id="case-id">Loading Directive...</h1>
+      </div>
+
+      <div class="vital-status-widget">
+        <div class="pulse-ring" id="vital-ring"></div>
+        <div class="vital-text">
+          <span class="vital-label">Infant Vital Harmony</span>
+          <span class="vital-mood" id="vital-mood">Neutral (5/10)</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Briefing Card -->
+    <article class="briefing-card">
+      <div class="section-label">Case Assessment</div>
+      <p class="case-context" id="case-context">
+        Synchronizing with central neonatal telemetry...
+      </p>
+
+      <div class="directive-divider"></div>
+
+      <div class="perspective-block">
+        <div class="section-label" style="color: var(--accent-cyan); margin-bottom: 6px;">Critical Operational Observations</div>
+        <p class="perspective-text" id="perspective-text">
+          Awaiting directive parameters...
+        </p>
+      </div>
+    </article>
+
+    <!-- Interactive Decisions Grid -->
+    <section class="decision-area">
+      <div class="choice-grid">
+        <button class="choice-card" id="choice-a">
+          <div>
+            <span class="choice-key">DETERMINATION [A]</span>
+            <div class="choice-label" id="choice-a-label">Option A</div>
+          </div>
+          <div class="choice-subtext" id="choice-a-subtext">Action description</div>
+        </button>
+
+        <button class="choice-card" id="choice-b">
+          <div>
+            <span class="choice-key">DETERMINATION [B]</span>
+            <div class="choice-label" id="choice-b-label">Option B</div>
+          </div>
+          <div class="choice-subtext" id="choice-b-subtext">Action description</div>
+        </button>
+      </div>
+
+      <!-- Awaiting Other Custodians Banner -->
+      <div class="status-banner" id="awaiting-banner" style="display: none;">
+        <span class="badge-pulse"></span>
+        <span>DETERMINATION RECORDED // AWAITING FELLOW CUSTODIANS ACROSS TABLE...</span>
+      </div>
+    </section>
+
+    <!-- Reveal Modal / Result Area -->
+    <section class="reveal-modal" id="reveal-area" style="display: none;">
+      <h2 class="reveal-title" id="reveal-title">CONSENSUS EVALUATION</h2>
+      <p class="reveal-summary" id="reveal-summary">Result outcome explanation...</p>
+
+      <div class="vote-matrix" id="vote-matrix">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <p class="reveal-discussion-prompt">
+        Confer with your fellow custodians across the table. What critical factors did each directive weigh?
+      </p>
+
+      <!-- Auto-Advance Countdown Bar -->
+      <div class="countdown-container" id="countdown-box" style="display: none;">
+        <div class="countdown-header">
+          <span>NEXT DIRECTIVE TRANSITION</span>
+          <span id="countdown-sec-text">8s</span>
+        </div>
+        <div class="countdown-track">
+          <div class="countdown-bar" id="countdown-bar"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen Footer -->
+    <footer class="screen-footer">
+      <span class="station-id" id="station-marker">TERMINAL // BIO-ETHICS INTERFACE</span>
+      <span>AHK Society 5.0 • Reimagining Autonomy</span>
+    </footer>
+  </main>
+
+  <script src="js/audio.js"></script>
+  <script src="js/screen.js"></script>
+</body>
+</html>
