@@ -1,0 +1,18 @@
+{
+  "unanimousFeedback": "Unanimous decision reached! The baby calms down.",
+  "splitFeedback": "No consensus reached! The baby becomes uneasy.",
+  "lobbyWelcome": "Welcome to Dilemma Baby.",
+  "lobbyWaiting": "Waiting for co-custodians ({count}/3 connected)...",
+  "lobbyReady": "Session is ready to begin!",
+  "lobbyAutoStart": "Starting session in {seconds}s...",
+  "queueMessage": "You are in line! Queue position: #{pos}. Waiting for current session to finish...",
+  "inactivityWarning": "Are you still there? Session resets in {seconds} seconds...",
+  "extendTimeButton": "Extend Time ⏱️",
+  "voteLocked": "Decision locked. Awaiting fellow custodians...",
+  "sessionCompleted": "All directives resolved. Session concluding...",
+  "perspectiveTitles": {
+    "1": "ECOLOGICAL & ENVIRONMENTAL PERSPECTIVE",
+    "2": "SOCIAL TRIAGE & HEALTHCARE PERSPECTIVE",
+    "3": "ALGORITHMIC & DATA AUTONOMY PERSPECTIVE"
+  }
+}

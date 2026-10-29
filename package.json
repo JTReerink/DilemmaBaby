@@ -1,0 +1,27 @@
+{
+  "name": "dilemma-baby",
+  "version": "2.0.0",
+  "description": "Dilemma Baby - Society 5.0 Interactive Speculative Installation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "hub": "node local_hub.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "node-osc": "^9.0.3",
+    "serialport": "^12.0.0",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5"
+  },
+  "keywords": [
+    "society-5.0",
+    "interactive-installation",
+    "arduino",
+    "touchdesigner",
+    "socketio",
+    "speculative-design"
+  ],
+  "author": "Jaap Reerink",
+  "license": "ISC"
+}

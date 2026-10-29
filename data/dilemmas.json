@@ -1,92 +1,67 @@
 [
   {
-    "id": "case-01",
-    "title": "Directive 01: The Synthetic Cardiopulmonary Unit",
-    "context": "The infant is born with acute cardiopulmonary failure. Without intervention within 24 hours, biological collapse is certain.",
-    "screen1": "A custom synthetic bio-pump can be synthesized immediately. However, fabricating this biopolymer requires high-temperature rare-mineral extraction that discharges toxic chemical effluent into the regional drinking aquifer, compromising water security for 10,000 citizens.",
-    "screen2": "An emergency biological donor organ is available in the neonatal ward. However, assigning it to this infant will bump another critically ill baby from the primary queue, reducing the other baby's survival chances from 85% to under 15%.",
-    "screen3": "The corporate consortium Med-Synthetix offers to install their proprietary cyber-cardiac unit free of charge. In exchange, the child must be permanently enrolled into their neural-telemetry ecosystem, surrendering all biometric and behavioral autonomy to commercial algorithms for life.",
-    "optionA": {
-      "id": "A",
-      "label": "Authorize Intervention",
-      "subtext": "Mandate immediate deployment of the procedure."
-    },
-    "optionB": {
-      "id": "B",
-      "label": "Decline Intervention",
-      "subtext": "Reject the procedure; rely on non-invasive supportive care."
+    "id": 1,
+    "title": "Directive 01: Experimental Gene Therapy",
+    "choices": [
+      { "id": "A", "text": "Authorize Treatment" },
+      { "id": "B", "text": "Decline Treatment" }
+    ],
+    "perspectives": {
+      "1": "ECOLOGICAL IMPACT: The therapy relies on rare earth minerals whose high-temperature refinement discharges toxic chemical effluent into the regional drinking aquifer, jeopardizing water access for 10,000 residents.",
+      "2": "SOCIAL TRIAGE: Granting this experimental therapy depletes the emergency pediatric quota, displacing another critically ill infant on the waiting list who holds a significantly higher statistical survival rate.",
+      "3": "DATA AUTONOMY: The bio-tech corporation offers the treatment free of charge in exchange for lifetime telemetry rights, permanently streaming the child's neural and behavioral data into commercial models."
     }
   },
   {
-    "id": "case-02",
-    "title": "Directive 02: Predictive Neural Rewiring",
-    "context": "Neonatal genome mapping indicates a 92% genetic probability of severe chronic pain and behavioral dysregulation manifesting by age three.",
-    "screen1": "The neural gene-therapy requires massive decentralized compute clusters to simulate protein folding, consuming power equal to an entire district's winter solar reserve, forcing brownouts across residential care homes.",
-    "screen2": "The gene-editing protocol is experimental and strictly quota-restricted. Approving this infant depletes the municipal pediatric emergency reserve, denying preventative treatments for three other pending cases.",
-    "screen3": "The neural rewiring suppresses the genetic pain pathways, but early clinical models show it permanently dampens the child's emotional spectrum and capacity for non-conformity, making future dissent neurologically impossible.",
-    "optionA": {
-      "id": "A",
-      "label": "Execute Neural Edit",
-      "subtext": "Intervene to eliminate pain and behavioral deviation."
-    },
-    "optionB": {
-      "id": "B",
-      "label": "Preserve Organic Genome",
-      "subtext": "Accept organic uncertainty; reject genetic intervention."
+    "id": 2,
+    "title": "Directive 02: Synthetic Cardiopulmonary Matrix",
+    "choices": [
+      { "id": "A", "text": "Deploy Cyber-Organ" },
+      { "id": "B", "text": "Preserve Organic State" }
+    ],
+    "perspectives": {
+      "1": "ECOLOGICAL IMPACT: Fabricating the synthetic organ generates acute electronic waste and micro-pollutants that disrupt local urban waterways and avian pollinators.",
+      "2": "SOCIAL TRIAGE: A human donor organ is available, but allocating it here denies care to an adjacent hospital district that has experienced chronic resource disinvestment.",
+      "3": "DATA AUTONOMY: The synthetic organ requires proprietary cloud firmware updates; failure to subscribe to corporate biometric terms will remotely throttle organ efficiency."
     }
   },
   {
-    "id": "case-03",
-    "title": "Directive 03: The Autonomous Guardian Protocol",
-    "context": "A cyber-kinetic micro-drone system is proposed to hover above the baby continuously, monitoring respiration, room air quality, and physical micro-hazards.",
-    "screen1": "The continuous micro-drone surveillance network emits persistent high-frequency acoustic waves and micro-pollutants that disrupt local avian pollinators and domestic urban fauna.",
-    "screen2": "Neighborhood zoning authorities mandate that if one home adopts the algorithmic guardian drone, surrounding un-monitored households will face automated child-welfare audits due to asymmetric risk indices.",
-    "screen3": "The autonomous drone uses predictive behavioral learning: every cry, reach, and parental touch is continuously scored, automatically adjusting lighting, sound, and parental access based on algorithmic directives.",
-    "optionA": {
-      "id": "A",
-      "label": "Activate Drone Protocol",
-      "subtext": "Authorize 24/7 automated robotic protection."
-    },
-    "optionB": {
-      "id": "B",
-      "label": "Decline Drone Protocol",
-      "subtext": "Retain human unassisted guardianship."
+    "id": 3,
+    "title": "Directive 03: Autonomous Drone Guardian",
+    "choices": [
+      { "id": "A", "text": "Activate AI Guardian" },
+      { "id": "B", "text": "Rely on Human Care" }
+    ],
+    "perspectives": {
+      "1": "ECOLOGICAL IMPACT: Constant aerial hovering generates persistent high-frequency acoustic waves and lithium battery turnover that harms domestic urban ecosystems.",
+      "2": "SOCIAL TRIAGE: Municipal authorities penalize households that opt out of algorithmic guardianship with mandatory child-welfare audits due to heightened risk metrics.",
+      "3": "DATA AUTONOMY: The drone scores every emotional cry, facial expression, and parental embrace, conditioning sensory feedback strictly through automated behavioral protocols."
     }
   },
   {
-    "id": "case-04",
-    "title": "Directive 04: Cognitive Synapse Pre-Loading",
-    "context": "A neural interface cap can be fitted over the infant's fontanelle to stream linguistic, musical, and mathematical structures directly into developing synapses during REM sleep.",
-    "screen1": "The synthetic neural transmission hubs generate significant electronic heat and e-waste, accelerating battery disposal crises in outsourced global recycling zones.",
-    "screen2": "Infants receiving pre-loading will enter primary development years ahead of non-enhanced peers, cementing a generational socio-economic caste divide in early childhood access.",
-    "screen3": "The curriculum streamed into the infant's mind is curated by an automated civic-productivity model, priming the infant for predefined state economic roles before self-identity can form.",
-    "optionA": {
-      "id": "A",
-      "label": "Deploy Cognitive Pre-Load",
-      "subtext": "Accelerate neural and cognitive capabilities."
-    },
-    "optionB": {
-      "id": "B",
-      "label": "Allow Natural Maturation",
-      "subtext": "Preserve unhurried organic cognitive development."
+    "id": 4,
+    "title": "Directive 04: Synaptic REM Pre-Loading",
+    "choices": [
+      { "id": "A", "text": "Initiate Synaptic Stream" },
+      { "id": "B", "text": "Allow Natural Maturation" }
+    ],
+    "perspectives": {
+      "1": "ECOLOGICAL IMPACT: Cryogenic server nodes required for deep cognitive streaming consume energy equivalent to an entire neighborhood's winter power reserve.",
+      "2": "SOCIAL TRIAGE: Early cognitive acceleration will widen the generational socioeconomic divide, pricing non-enhanced infants out of foundational development opportunities.",
+      "3": "DATA AUTONOMY: The curriculum is optimized by a state productivity model, conditioning the infant for predetermined economic roles before individual self-determination forms."
     }
   },
   {
-    "id": "case-05",
-    "title": "Directive 05: The Synthetic Nutrient Matrix",
-    "context": "The baby displays severe metabolic intolerance to natural milk and organic formulas. A patented bio-synthetic nutrient matrix has been formulated.",
-    "screen1": "The bio-synthetic matrix is synthesized from genetically engineered algae grown in mono-culture bioreactors that demand high volumes of treated phosphorus, depleting regenerative soil supplies.",
-    "screen2": "The proprietary formula is controlled by a multinational patent. Subsidizing this single child's treatment strains the regional clinic's budget, prompting price hikes on standard pediatric medicines.",
-    "screen3": "The synthetic formula alters the infant's gut microbiome to only digest synthetic food products, locking the child into lifetime consumer dependency on a single biotech corporation's nutritional line.",
-    "optionA": {
-      "id": "A",
-      "label": "Administer Synthetic Matrix",
-      "subtext": "Guarantee immediate metabolic stabilization."
-    },
-    "optionB": {
-      "id": "B",
-      "label": "Pursue Natural Adaptation",
-      "subtext": "Attempt slow natural metabolic desensitization with associated risk."
+    "id": 5,
+    "title": "Directive 05: Synthetic Bio-Nutrient Matrix",
+    "choices": [
+      { "id": "A", "text": "Administer Synthetic Matrix" },
+      { "id": "B", "text": "Pursue Natural Adaptation" }
+    ],
+    "perspectives": {
+      "1": "ECOLOGICAL IMPACT: Cultivating the bio-synthetic nutrient algae in mono-culture bioreactors demands excessive phosphorus, depleting regenerative agricultural reserves.",
+      "2": "SOCIAL TRIAGE: High subsidy costs for this single infant's nutritional formula drain the municipal pediatric budget, forcing price hikes on standard pediatric medicines.",
+      "3": "DATA AUTONOMY: The synthetic formula alters the infant's gut microbiome to process only patented food compounds, locking the child into lifetime consumer dependency on one conglomerate."
     }
   }
 ]

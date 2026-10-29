@@ -2,227 +2,221 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Autonomy Baby — Installation Portal</title>
-  <link rel="stylesheet" href="css/common.css">
-  <style>
-    .portal-container {
-      max-width: 960px;
-      margin: 0 auto;
-      min-height: 100vh;
-      padding: 60px 24px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    .portal-hero {
-      text-align: center;
-      margin-bottom: 48px;
-    }
-
-    .portal-badge {
-      display: inline-block;
-      margin-bottom: 12px;
-    }
-
-    .portal-title {
-      font-size: 2.8rem;
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      margin-bottom: 12px;
-      background: linear-gradient(135deg, #fff, var(--text-secondary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .portal-subtitle {
-      font-size: 1.15rem;
-      color: var(--text-secondary);
-      max-width: 620px;
-      margin: 0 auto;
-      line-height: 1.6;
-    }
-
-    .station-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      margin-bottom: 32px;
-    }
-
-    .station-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      padding: 28px 24px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 20px;
-      text-decoration: none;
-      color: inherit;
-      box-shadow: var(--shadow-sm);
-      transition: all var(--trans-smooth);
-    }
-
-    .station-card:hover {
-      border-color: var(--accent-cyan);
-      transform: translateY(-4px);
-      box-shadow: 0 12px 30px rgba(0, 210, 255, 0.15);
-      background: var(--bg-surface-elevated);
-    }
-
-    .station-num {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--accent-cyan);
-    }
-
-    .station-name {
-      font-size: 1.35rem;
-      font-weight: 800;
-      color: #fff;
-    }
-
-    .station-desc {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      line-height: 1.5;
-    }
-
-    .host-banner-card {
-      background: linear-gradient(135deg, rgba(14, 18, 26, 0.9) 0%, rgba(21, 27, 39, 0.9) 100%);
-      border: 1px solid var(--accent-cyan-glow);
-      border-radius: 16px;
-      padding: 24px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      text-decoration: none;
-      color: inherit;
-      transition: all var(--trans-smooth);
-    }
-
-    .host-banner-card:hover {
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 24px var(--accent-cyan-glow);
-      transform: translateY(-2px);
-    }
-
-    .network-info-box {
-      margin-top: 36px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    @media (max-width: 850px) {
-      .station-grid {
-        grid-template-columns: 1fr;
-      }
-      .host-banner-card {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-      }
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dilemma Baby — Reimagining Autonomy</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="ambient-glow"></div>
+  <div class="ambient-bg"></div>
 
-  <div class="portal-container">
-    <div class="portal-hero">
-      <span class="badge portal-badge">AHK Society 5.0 • Installation Launchpad</span>
-      <h1 class="portal-title">Autonomy Baby</h1>
-      <p class="portal-subtitle">
-        Exhibition Theme: <strong>"Reimagining Autonomy"</strong>.<br>
-        Launch the participant interfaces on the outward-facing table displays, or open the facilitator control center.
-      </p>
-    </div>
+  <main class="app-container">
+    
+    <!-- Top Status Bar -->
+    <header class="top-bar">
+      <div class="brand-badge">
+        <span class="brand-dot"></span>
+        <span>Dilemma Baby</span>
+      </div>
 
-    <!-- 3 Participant Displays -->
-    <div class="station-grid">
-      <a href="screen.html?id=1" target="_blank" class="station-card">
-        <div>
-          <span class="station-num">POSITION 01</span>
-          <h2 class="station-name">Screen 1</h2>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="vital-pill">
+          <span>Vital State:</span>
+          <span class="vital-score" id="vital-score">5/10</span>
         </div>
-        <p class="station-desc">
-          Outward-facing monitor 1. Displays the case directive with specialized situational observations.
-        </p>
-        <span class="btn btn-primary" style="align-self: flex-start;">Launch Screen 1 ↗</span>
-      </a>
+        <button class="btn-extend-timer" id="btn-extend-time" title="Reset idle timer">
+          ⏱️ Extend
+        </button>
+      </div>
+    </header>
 
-      <a href="screen.html?id=2" target="_blank" class="station-card">
-        <div>
-          <span class="station-num">POSITION 02</span>
-          <h2 class="station-name">Screen 2</h2>
-        </div>
-        <p class="station-desc">
-          Outward-facing monitor 2. Displays the case directive with specialized situational observations.
-        </p>
-        <span class="btn btn-primary" style="align-self: flex-start;">Launch Screen 2 ↗</span>
-      </a>
-
-      <a href="screen.html?id=3" target="_blank" class="station-card">
-        <div>
-          <span class="station-num">POSITION 03</span>
-          <h2 class="station-name">Screen 3</h2>
-        </div>
-        <p class="station-desc">
-          Outward-facing monitor 3. Displays the case directive with specialized situational observations.
-        </p>
-        <span class="btn btn-primary" style="align-self: flex-start;">Launch Screen 3 ↗</span>
-      </a>
-    </div>
-
-    <!-- Host Dashboard Banner -->
-    <a href="host.html" target="_blank" class="host-banner-card">
-      <div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-          <span class="badge" style="color: var(--accent-cyan); border-color: var(--accent-cyan);">Facilitator Control</span>
-          <h2 style="font-size: 1.3rem; font-weight: 700;">Host &amp; Prompt Admin Console</h2>
-        </div>
-        <p style="font-size: 0.85rem; color: var(--text-secondary);">
-          Experience reset, 0–10 happiness gauge, Web Serial Arduino LED bridge, live voting matrix, and full Dilemma Editor.
+    <!-- ================================================================= -->
+    <!-- 1. VIEW: CONNECTING / RENDER COLD-START                           -->
+    <!-- ================================================================= -->
+    <section class="view-section active" id="view-connecting">
+      <div class="card connecting-box">
+        <div class="spinner"></div>
+        <h2 class="connecting-title">Connecting to Bio-Server...</h2>
+        <p class="connecting-sub">
+          Waking up cloud server. If connecting for the first time, this may take 30–50 seconds. Please keep this screen open.
         </p>
       </div>
-      <span class="btn btn-primary">Open Host Console ↗</span>
-    </a>
+    </section>
 
-    <!-- Local Network Info -->
-    <div class="network-info-box">
-      <span>MULTI-DEVICE NETWORK URLS:</span>
-      <span id="network-ips">Loading local IPs...</span>
+    <!-- ================================================================= -->
+    <!-- 2. VIEW: QUEUE / WAITING ROOM                                     -->
+    <!-- ================================================================= -->
+    <section class="view-section" id="view-queue">
+      <div class="card queue-box">
+        <span class="queue-badge">Waiting Room</span>
+        <div class="queue-number-circle">
+          <span class="queue-num" id="queue-position">#1</span>
+        </div>
+        <h2 style="font-size: 1.35rem; font-weight: 800;">You are in line!</h2>
+        <p class="queue-subtext" id="queue-message">
+          A game session is currently active. Your screen will automatically activate as soon as the current session concludes.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- 3. VIEW: LOBBY / READY ROOM                                       -->
+    <!-- ================================================================= -->
+    <section class="view-section" id="view-lobby">
+      <div class="card lobby-box">
+        <span class="player-slot-badge" id="lobby-slot-badge">
+          Assigned: Player 1
+        </span>
+        <h2 class="lobby-title">Welcome to Dilemma Baby</h2>
+        
+        <div class="slots-grid">
+          <div class="slot-indicator" id="slot-ind-1">
+            <span class="slot-dot"></span>
+            <span>Player 1</span>
+          </div>
+          <div class="slot-indicator" id="slot-ind-2">
+            <span class="slot-dot"></span>
+            <span>Player 2</span>
+          </div>
+          <div class="slot-indicator" id="slot-ind-3">
+            <span class="slot-dot"></span>
+            <span>Player 3</span>
+          </div>
+        </div>
+
+        <p class="lobby-status-msg" id="lobby-status-msg">
+          Waiting for co-custodians (1/3 connected)...
+        </p>
+
+        <!-- Auto-start countdown / Start button -->
+        <div id="lobby-action-box" style="width: 100%; display: none;">
+          <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-cyan); margin-bottom: 10px;" id="lobby-countdown-text">
+            Starting in 5s...
+          </div>
+          <button class="btn-main" id="btn-start-now">
+            Start Session Now →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- 4. VIEW: ACTIVE DILEMMA                                           -->
+    <!-- ================================================================= -->
+    <section class="view-section" id="view-dilemma">
+      <article class="card">
+        <div class="dilemma-header">
+          <span class="dilemma-num" id="dilemma-index-label">DIRECTIVE 01</span>
+          <h2 class="dilemma-title" id="dilemma-title">Loading Directive...</h2>
+        </div>
+
+        <div class="perspective-box">
+          <span class="perspective-tag" id="perspective-title">YOUR ASSIGNED PERSPECTIVE</span>
+          <p class="perspective-body" id="perspective-body">
+            Awaiting transmission...
+          </p>
+        </div>
+
+        <!-- Decision Buttons -->
+        <div class="decision-grid">
+          <button class="choice-btn" id="btn-choice-a">
+            <div class="choice-content">
+              <span class="choice-letter">OPTION [A]</span>
+              <span class="choice-text" id="choice-a-text">Choice A</span>
+            </div>
+            <span style="color: var(--accent-cyan); font-weight: 700;">→</span>
+          </button>
+
+          <button class="choice-btn" id="btn-choice-b">
+            <div class="choice-content">
+              <span class="choice-letter">OPTION [B]</span>
+              <span class="choice-text" id="choice-b-text">Choice B</span>
+            </div>
+            <span style="color: var(--warning-amber); font-weight: 700;">→</span>
+          </button>
+        </div>
+
+        <!-- Locked In Banner -->
+        <div class="submitted-banner" id="vote-submitted-banner">
+          <span class="brand-dot"></span>
+          <span id="vote-locked-text">Decision locked. Awaiting fellow custodians...</span>
+        </div>
+      </article>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- 5. VIEW: REVEAL OUTCOME                                           -->
+    <!-- ================================================================= -->
+    <section class="view-section" id="view-reveal">
+      <div class="card reveal-card" id="reveal-card">
+        <h2 class="reveal-title" id="reveal-title">Consensus Evaluated</h2>
+        <p class="reveal-message" id="reveal-message">Feedback explanation...</p>
+
+        <!-- Vote Breakdown -->
+        <div class="vote-breakdown-grid" id="reveal-breakdown">
+          <div class="breakdown-item">
+            <span>Player 1</span>
+            <span class="breakdown-choice" id="bd-1">-</span>
+          </div>
+          <div class="breakdown-item">
+            <span>Player 2</span>
+            <span class="breakdown-choice" id="bd-2">-</span>
+          </div>
+          <div class="breakdown-item">
+            <span>Player 3</span>
+            <span class="breakdown-choice" id="bd-3">-</span>
+          </div>
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">
+          Discuss across the table: How did your information differ?
+        </p>
+
+        <!-- Auto Advance Countdown Bar -->
+        <div class="auto-advance-bar-box">
+          <div class="auto-advance-progress" id="reveal-progress"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- 6. VIEW: SESSION COMPLETED                                        -->
+    <!-- ================================================================= -->
+    <section class="view-section" id="view-completed">
+      <div class="card" style="text-align: center; padding: 40px 20px;">
+        <div style="font-size: 2.4rem; margin-bottom: 12px;">🌱</div>
+        <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 10px;">Session Completed</h2>
+        <p style="font-size: 0.95rem; color: var(--text-sub); line-height: 1.5;" id="completed-text">
+          All directives resolved. The baby's vital equilibrium has stabilized. Returning to lobby...
+        </p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span>Society 5.0 • Reimagining Autonomy</span>
+    </footer>
+
+  </main>
+
+  <!-- ================================================================= -->
+  <!-- MODAL: INACTIVITY WARNING (30s Idle + 6s Warning)                 -->
+  <!-- ================================================================= -->
+  <div class="modal-overlay" id="modal-inactivity">
+    <div class="modal-card">
+      <div class="modal-icon">⚠️</div>
+      <h3 class="modal-title">Are you still there?</h3>
+      <p class="modal-text">
+        No input detected. To give waiting participants a turn, this session resets in:
+      </p>
+      <div class="modal-countdown-badge" id="inactivity-countdown">6s</div>
+      <button class="btn-confirm-active" id="btn-im-here">
+        Yes, I am here! (Keep Playing)
+      </button>
     </div>
   </div>
 
-  <script>
-    fetch('/api/network-info')
-      .then(r => r.json())
-      .then(data => {
-        const el = document.getElementById('network-ips');
-        if (data.localIps && data.localIps.length > 0) {
-          el.innerHTML = data.localIps.map(ip => `<a href="http://${ip}:${data.port}" target="_blank" style="color:var(--accent-cyan); margin-left:8px;">http://${ip}:${data.port}</a>`).join(' | ');
-        } else {
-          el.textContent = 'http://localhost:' + (data.port || 3000);
-        }
-      })
-      .catch(() => {
-        document.getElementById('network-ips').textContent = 'http://localhost:3000';
-      });
-  </script>
+  <!-- Socket.io client & Player logic -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/player.js"></script>
 </body>
 </html>

@@ -1,88 +1,224 @@
-# Autonomy Baby — Interactive Installation
-**Exhibition Theme:** *Reimagining Autonomy*  
-**Context:** AHK Society 5.0 (Year 3)
+# Dilemma Baby — Society 5.0 Festival Installation
+**Exhibition Theme:** *"Reimagining Autonomy"*  
+**Context:** AHK Society 5.0 (Year 3) — Interactive Speculative Neonatal Installation  
+**Repository:** [JTReerink/DilemmaBaby](https://github.com/JTReerink/DilemmaBaby)  
+**Production Domain:** [dilemmababy.jtxr.nl](https://dilemmababy.jtxr.nl) (Render.com)
 
 ---
 
-## 1. Concept & Installation Architecture
-In the center of a circular or triangular table sits a simulated baby with internal illumination. Around the baby are three outward-facing screens:
-- **Participants**: Sit or stand facing each other across the table with the baby situated between them.
-- **Physical Asymmetry**: Participants cannot see each other’s screens directly.
-- **Invisible Asymmetry**: Each screen displays the same overarching neonatal dilemma, but the critical findings differ:
-  - **Screen 1**: Ecological & systemic resource extraction externalities.
-  - **Screen 2**: Medical triage, social priority queues, and human displacement.
-  - **Screen 3**: Algorithmic governance, data rights, and loss of personal autonomy.
-  *Note:* The UI **does not** label the screens by theme; participants assume they are reading the objective reality and must talk across the table to discover their divergent information.
-- **Consensus Rule**:
-  - **Unanimous Alignment (3/3 identical)**: The decision counts as a harmonious resolution. Baby happiness increases (+1).
-  - **Divergence (split vote)**: The decision fails to achieve consensus. The baby enters distress and happiness decreases (-1).
-- **Scale**: Happiness ranges from **0 to 10** (starts at **5**, neutral equilibrium).
+## 👶 1. Concept & Installation Architecture
 
----
+In the center of the exhibition table sits a speculative, paper-mache simulated baby equipped with biometric internal illumination. Around the baby are three outward-facing displays (mobile phones or tablets):
+- **Physical Orientation**: Three participants face each other with the baby situated between them.
+- **Asymmetric Perspective**: Each participant scans a single QR code on their smartphone and is automatically assigned one of three perspectives:
+  - **Player 1**: *Ecological & Environmental Perspective* (extractive impact, supply chains, rare earth minerals).
+  - **Player 2**: *Social Triage & Healthcare Perspective* (waiting queues, mortality statistics, resource rationing).
+  - **Player 3**: *Algorithmic & Data Autonomy Perspective* (AI risk scoring, institutional compliance, predictive profiling).
+- **Consensus & Biometric Feedback**:
+  - **Unanimous Alignment (100% agreement)**: The baby calms down and happiness increases (+1, up to 10). Emits harmonic emerald swell.
+  - **Discord / Split Decision**: The baby enters distress and happiness decreases (-1, down to 0). Emits erratic crimson tachycardic glitch.
+  - **Baseline Equilibrium**: The session commences at happiness level **5** (neutral).
+- **Autonomous Operation**: The installation operates completely autonomously without requiring facilitator intervention to start or advance directives. Facilitators have access to an optional Host Dashboard for overrides.
 
-## 2. Quick Start
-
-### Starting the Server
-Double-click `start.bat` in the root folder, or run:
-```bash
-node server.js
 ```
-The server will start on port `3000` and automatically output local and Wi-Fi network addresses.
-
-### URLs
-- **Installation Portal (Launcher)**: `http://localhost:3000/`
-- **Screen 1**: `http://localhost:3000/screen.html?id=1`
-- **Screen 2**: `http://localhost:3000/screen.html?id=2`
-- **Screen 3**: `http://localhost:3000/screen.html?id=3`
-- **Host & Admin Dashboard**: `http://localhost:3000/host.html`
-
-*Multi-Device Setup (Tablets / iPads / Laptops):*  
-Connect all devices to the same local Wi-Fi router. Open `http://<HOST_IP>:3000` (e.g. `http://192.168.1.50:3000`) on each device.
-
----
-
-## 3. Host Dashboard & Facilitator Features
-
-The Host Dashboard (`/host.html`) provides two main panels:
-
-### Panel 1: Live Facilitation
-- **Reset Experience Button**: Emergency reset that sets happiness to 5, clears all player votes, and returns to Directive 01.
-- **Happiness Master Gauge**: Live display (0–10) with manual override buttons (`-1 Distress`, `+1 Harmony`) and an interactive slider.
-- **Custodian Matrix**: Live tracking of Screen 1, Screen 2, and Screen 3 indicating who has submitted and which option they chose.
-- **Abstention-Tolerant Force Reveal**: If someone does not answer and the host clicks "Force Reveal Outcome", consensus is evaluated solely from active votes (e.g. 2 votes for A and 1 unvoted = Consensus on A).
-- **Auto-Continue Countdown**: Once decisions are revealed, all screens display an animated countdown bar and automatically transition to the next directive after a few seconds (default: 8s). The host can change the delay (5s, 8s, 12s, 15s, or Manual), skip the timer, or pause it.
-- **Directive Inspector**: View all three screen variations side-by-side to monitor what participants are debating.
-- **Round Navigation**: Next Directive, Previous Directive, Reopen Voting, and Force Reveal buttons.
-- **Arduino Web Serial Manager**: Connect directly to the Arduino over USB in Google Chrome or Microsoft Edge with 1 click. Includes manual test color buttons and a live serial transmission log.
-- **Biometric Soundboard**: Procedural Web Audio API sound triggers (Heartbeat lub-dub, Coo, Whimper) without external sound file dependencies.
-
-### Panel 2: Dilemma & Prompt Editor (Admin CMS)
-- Access via the **"Dilemmas & Prompts (Admin)"** tab.
-- Easily edit:
-  - Case Directive Title
-  - Core Context Scenario
-  - Screen 1 Specific Finding (Ecological)
-  - Screen 2 Specific Finding (Social Triage)
-  - Screen 3 Specific Finding (Autonomy)
-  - Choice A Label & Subtext
-  - Choice B Label & Subtext
-- Add new cases, duplicate existing ones, or delete cases.
-- Click **"Save All Changes & Synchronize Screens"** to save directly to `data/dilemmas.json` on the server and update all active screens in real time.
+                   [ Mobile Players / QR Code ]
+                    (100% English Mobile UI)
+             Slot 1            Slot 2            Slot 3
+          (Ecological)     (Social Triage)     (Autonomy)
+               \                 |                 /
+                ▼                ▼                ▼
+         ==================================================
+           ONLINE SERVER (Render.com: dilemmababy.jtxr.nl)
+             - Express + Socket.io (WSS & /ping Keep-Alive)
+             - Dynamic Slots & Waiting Room Queue
+             - Autonomous Inactivity Timer (30s + 6s Warning)
+         ==================================================
+                                 │
+                     Socket.io Client Relay
+                                 ▼
+         ==================================================
+                LOCAL HOST LAPTOP (`local_hub.js`)
+         ==================================================
+                │                                  │
+         OSC (UDP: 8000)                    USB Serial (9600 baud)
+                ▼                                  ▼
+         [ TouchDesigner ]                  [ Arduino / ESP32 ]
+         Visuals & Sound FX                 WS2812B NeoPixel Strip
+         `/baby/happiness`                  `HAPPINESS:X\n`
+         `/baby/state`                      `V:1\n` / `V:0\n`
+         `/baby/pulse`                      `RESET\n`
+```
 
 ---
 
-## 4. Arduino LED Integration
+## 🚀 2. Quick Start
 
-When you are ready to connect the physical baby's LED:
-1. Open the reference sketch at `arduino/AutonomyBaby/AutonomyBaby.ino` in the Arduino IDE.
-2. In the sketch header, set:
-   - `USE_NEOPIXEL 1` if using a WS2812B addressable strip (Pin 6).
-   - `USE_NEOPIXEL 0` if using a standard analog 4-pin RGB LED (Pins 9, 10, 11).
-3. Upload to your Arduino (Uno, Nano, Mega, or ESP32).
-4. Plug the Arduino into the host computer's USB port.
-5. In Chrome or Edge on the Host Dashboard (`/host.html`), click **"Connect Arduino"** and select the Arduino COM port.
-6. The dashboard will automatically stream serial commands:
-   - `H:<0-10>\n` (sets happiness level and color)
-   - `V:1\n` (triggers consensus green harmonic wave)
-   - `V:0\n` (triggers discord red glitch)
-   - `RESET\n` (resets to neutral 5)
+### A. Local Development
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Start the online server (runs on port 3000 by default)
+npm start
+
+# 3. In another terminal on the host laptop, run the local relay hub:
+npm run hub -- --local
+```
+
+### B. Endpoints & URLs
+- **Player Interface (Join via QR Code)**: `http://localhost:3000/` or `https://dilemmababy.jtxr.nl/`
+- **Host & Admin Dashboard**: `http://localhost:3000/host.html` or `https://dilemmababy.jtxr.nl/host.html`
+- **Uptime & Health Keep-Alive**: `http://localhost:3000/ping` or `https://dilemmababy.jtxr.nl/ping`
+
+---
+
+## ☁️ 3. Deploying to Render.com (`dilemmababy.jtxr.nl`)
+
+The server is optimized for Render's free tier with automated cold-start handling:
+1. Link your GitHub repository (`JTReerink/DilemmaBaby`) in Render.com.
+2. Select **Web Service** with the following settings:
+   - **Environment**: Node
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Plan**: Free
+3. In **Custom Domains**, add `dilemmababy.jtxr.nl` and configure the CNAME / DNS records.
+4. **Cold-Start Resilience**:
+   - Render spins down web services after 15 minutes of inactivity. The player interface features a built-in **"Waking up baby simulator..."** banner that informs visitors during the 30–50s spin-up time while Socket.io automatically reconnects.
+   - You can also ping `https://dilemmababy.jtxr.nl/ping` every 10 minutes via an uptime monitor (e.g. UptimeRobot or cron-job.org) to keep the service permanently warm during festival hours.
+
+---
+
+## 📱 4. Player Mobile Experience (`/index.html`)
+
+- **Language**: Strictly **100% English** for international festival visitors.
+- **Single QR Code Join**: All participants scan the identical QR code. Slots 1, 2, and 3 are assigned in order of connection.
+- **Waiting Room Queue**: If a 4th or subsequent participant connects while a session is active, they see a clean waiting screen:
+  `"Queue position: #1. Waiting for current session to finish..."`
+  When an active player leaves or the session resets, queued participants are automatically promoted to active slots.
+- **Autonomous Self-Start**: Once 2 or 3 players enter the lobby, a 5-second countdown begins automatically. Players can also tap "Start Session Immediately".
+- **Tactile Dilemma Voting**:
+  - Displays the case title, choices (Option A & Option B), and the player's secret perspective.
+  - Buttons provide tactile vibration feedback on supported smartphones.
+  - Upon selecting an option, the vote is locked in with a pending confirmation message.
+- **Inactivity Protection (30s Idle + 6s Warning)**:
+  - If no vote is submitted for 30 seconds, an alert modal appears: *"Are you still there? Session resets in 6 seconds..."*
+  - A persistent **"Extend Time ⏱️"** button in the header allows visitors to grant extra debate time without losing their spot.
+  - Tapping "Yes, Still Here" clears the modal and resets the 30-second timer.
+
+---
+
+## 🎛️ 5. Host & Facilitator Dashboard (`/host.html`)
+
+The Host Dashboard provides comprehensive monitoring and customization:
+
+### Tab 1: Live Facilitation
+- **Live Biometric Status**: Real-time display of happiness level (0–10), active slot assignments, and live queue count.
+- **Vote Matrix**: Real-time inspection of who has voted for Option A or B.
+- **Facilitator Controls**:
+  - `Adjust Happiness`: Manual `+1` / `-1` or direct slider override.
+  - `Skip Dilemma`: Advance immediately to the next case.
+  - `Reset Session`: Reset to baseline neutral 5 and return to the lobby.
+- **Abstention Tolerance**: If a player abstains or walks away, the host can force-reveal without penalizing consensus if the active participants agree.
+
+### Tab 2: Dilemma CMS Editor
+- Dynamically view, edit, add, or delete neonatal dilemmas without modifying source code.
+- Customizes Title, Options (A & B), and Perspectives (1, 2, 3).
+- Saves directly to `data/dilemmas.json` and synchronizes all active screens.
+
+### Tab 3: UI Text Customizer
+- Facilitators can edit all player-facing UI strings on the fly:
+  - Consensus Success Message (*"Unanimous decision reached! The baby calms down."*)
+  - Conflict Warning Message (*"No consensus reached! The baby becomes uneasy."*)
+  - Lobby waiting, ready, and auto-start banners.
+  - Queue waiting room text.
+  - Inactivity modal warning messages.
+- Saves immediately to `data/settings.json` and updates connected clients.
+
+---
+
+## ⚡ 6. Local Laptop Relay (`local_hub.js`)
+
+`local_hub.js` runs locally on the host laptop next to the installation to bridge the cloud server to TouchDesigner and the Arduino.
+
+### Running the Hub:
+```bash
+# Connect to production cloud server (default: dilemmababy.jtxr.nl):
+npm run hub
+
+# Connect to local test server:
+npm run hub -- --local
+
+# Specify explicit serial port and OSC target:
+node local_hub.js --server https://dilemmababy.jtxr.nl --port COM3 --osc-port 8000
+
+# Simulation mode (no Arduino or serial hardware needed):
+npm run hub -- --sim
+```
+
+### Supported CLI Flags:
+| Flag | Description | Default |
+|---|---|---|
+| `--server <url>` | Socket.io server endpoint | `https://dilemmababy.jtxr.nl` |
+| `--local` | Connects to `http://localhost:3000` | — |
+| `--port <com>` | Arduino USB Serial Port (`COM3`, `/dev/ttyUSB0`) | Auto-detect |
+| `--baud <baud>` | Serial baud rate | `9600` |
+| `--osc-host <ip>` | OSC receiver IP (TouchDesigner) | `127.0.0.1` |
+| `--osc-port <p>` | OSC receiver UDP port | `8000` |
+| `--sim` | Run in headless simulation mode | `false` |
+
+### TouchDesigner OSC Specification:
+Incoming OSC messages sent to `127.0.0.1:8000`:
+- `/baby/happiness` *(int: 0–10)*: Current biometric happiness score.
+- `/baby/state` *(string)*: Current state (`lobby`, `ready`, `active`, `revealed`, `completed`).
+- `/baby/pulse` *(int: 1 or 0)*: Trigger on vote reveal (1 = Consensus swell, 0 = Conflict glitch).
+- `/baby/pulseType` *(string)*: `'consensus'` or `'conflict'`.
+- `/baby/dilemmaIndex` *(int)*: Zero-based index of current active dilemma.
+- `/baby/connected` *(int: 1 or 0)*: Cloud server connection status.
+
+---
+
+## 🤖 7. Arduino NeoPixel Controller (`AutonomyBaby.ino`)
+
+The sketch at `arduino/AutonomyBaby/AutonomyBaby.ino` drives the WS2812B NeoPixel strip inside the paper-mache baby.
+
+### Hardware Wiring:
+- **NeoPixel Strip DIN**: Arduino Digital Pin `6` (configurable).
+- **Power**: 5V and GND (use external 5V power if driving >15 NeoPixels).
+- **Standard RGB Fallback**: If using a classic 4-pin RGB LED, set `#define USE_NEOPIXEL 0` (Pins 9, 10, 11).
+
+### Dynamic Biometric Behavior:
+- **Happiness 10 (Tranquil Equilibrium)**:
+  - Color: Soothing cyan-green `(0, 255, 180)`.
+  - Rhythm: Deep, slow meditative breathing (~20 breaths/min).
+- **Happiness 5 (Baseline Neutral)**:
+  - Color: Warm soft yellow `(255, 190, 20)`.
+  - Rhythm: Steady biomimetic heartbeat (~60 bpm).
+- **Happiness 0 (Distress Crisis)**:
+  - Color: Alarming pure crimson `(255, 0, 0)`.
+  - Rhythm: Rapid tachycardia palpitations (~150 bpm) with sudden erratic glitch jitters.
+
+### Serial Protocol (9600 Baud):
+| Command | Action |
+|---|---|
+| `HAPPINESS:X\n` or `H:X\n` | Updates happiness to `X` (0–10) with smooth continuous color blending |
+| `V:1\n` or `PULSE:consensus\n` | Triggers double harmonic emerald swell |
+| `V:0\n` or `PULSE:conflict\n` | Triggers 5-step rapid red electric glitch spasm |
+| `RESET\n` | Resets happiness to neutral 5 |
+| `TEST:<COLOR>\n` | Tests hardware output (`RED`, `GREEN`, `CYAN`, `YELLOW`) |
+
+---
+
+## 🧪 8. Automated Testing
+
+To run the full end-to-end test suite:
+```bash
+node -e "require('./scratch/test_festival_flow.js')"
+```
+This runs 24 automated checks verifying:
+- `/ping` endpoint response
+- 3-player slot assignment and unique perspectives
+- 4th player waiting room queueing
+- Autonomous start & voting evaluation
+- Inactivity extension socket flow
+- Host CMS dilemma & settings persistence
+- Disconnect handling & dynamic queue promotion

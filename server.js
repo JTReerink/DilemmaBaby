@@ -1,161 +1,121 @@
 // ============================================================================
-// Autonomy Baby - Server
-// Reimagining Autonomy (Society 5.0 Interactive Installation)
-// Zero-dependency Node.js HTTP + Server-Sent Events (SSE) server
+// DILEMMA BABY - SERVER
+// Society 5.0 Festival Interactive Installation
+// Express + Socket.io Server (Render.com ready with WSS & Keep-Alive)
 // ============================================================================
 
-const http = require('node:http');
-const fs = require('node:fs');
-const path = require('node:path');
-const os = require('node:os');
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+
+const app = express();
+const server = http.createServer(app);
+
+// Socket.io with robust CORS and transport fallbacks for cloud hosting
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  },
+  transports: ['websocket', 'polling']
+});
 
 const PORT = process.env.PORT || 3000;
-const PUBLIC_DIR = path.join(__dirname, 'public');
-const DATA_FILE = path.join(__dirname, 'data', 'dilemmas.json');
+const DATA_DIR = path.join(__dirname, 'data');
+const DILEMMAS_FILE = path.join(DATA_DIR, 'dilemmas.json');
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 
-// --- In-Memory State ---
+// --- In-Memory State & Configurations ---
 let dilemmas = [];
-try {
-  const rawData = fs.readFileSync(DATA_FILE, 'utf-8');
-  dilemmas = JSON.parse(rawData);
-} catch (err) {
-  console.error('[SERVER] Error reading dilemmas.json:', err.message);
-  dilemmas = [];
-}
+let settings = {};
 
-let gameState = {
-  happiness: 5,             // 0 to 10 (5 = neutral)
-  currentDilemmaIndex: 0,   // index in dilemmas array
-  status: 'voting',         // 'voting' | 'revealed'
-  votes: { '1': null, '2': null, '3': null },
-  result: null,             // { consensus: boolean, unanimousChoice: 'A'|'B'|null, votes: {...} }
-  history: [],              // list of past round results
-  autoAdvanceAt: null,      // timestamp in ms when next round will trigger
-  autoAdvanceDuration: 8,   // countdown in seconds
-  autoAdvanceEnabled: true  // auto advance on/off toggle
-};
-
-// Connected SSE clients
-const sseClients = new Set();
-
-let autoAdvanceTimer = null;
-let autoAdvanceDuration = 8;
-let autoAdvanceEnabled = true;
-
-function cancelAutoAdvance() {
-  if (autoAdvanceTimer) {
-    clearTimeout(autoAdvanceTimer);
-    autoAdvanceTimer = null;
-  }
-  gameState.autoAdvanceAt = null;
-  gameState.autoAdvanceDuration = autoAdvanceDuration;
-  gameState.autoAdvanceEnabled = autoAdvanceEnabled;
-}
-
-function startAutoAdvance() {
-  cancelAutoAdvance();
-  if (!autoAdvanceEnabled) {
-    broadcastState();
-    return;
+function loadData() {
+  try {
+    dilemmas = JSON.parse(fs.readFileSync(DILEMMAS_FILE, 'utf-8'));
+  } catch (err) {
+    console.error('[SERVER] Error reading dilemmas.json:', err.message);
+    dilemmas = [];
   }
 
-  const now = Date.now();
-  gameState.autoAdvanceDuration = autoAdvanceDuration;
-  gameState.autoAdvanceAt = now + (autoAdvanceDuration * 1000);
-  gameState.autoAdvanceEnabled = true;
-
-  autoAdvanceTimer = setTimeout(() => {
-    advanceToNextDilemma();
-  }, autoAdvanceDuration * 1000);
-}
-
-function advanceToNextDilemma() {
-  cancelAutoAdvance();
-  if (dilemmas.length > 0) {
-    gameState.currentDilemmaIndex = (gameState.currentDilemmaIndex + 1) % dilemmas.length;
-  }
-  gameState.votes = { '1': null, '2': null, '3': null };
-  gameState.status = 'voting';
-  gameState.result = null;
-  broadcastState();
-}
-
-function broadcastState() {
-  const currentDilemma = dilemmas[gameState.currentDilemmaIndex] || null;
-  const payload = JSON.stringify({
-    ...gameState,
-    totalDilemmas: dilemmas.length,
-    currentDilemma
-  });
-
-  const message = `data: ${payload}\n\n`;
-  for (const client of sseClients) {
-    try {
-      client.write(message);
-    } catch {
-      sseClients.delete(client);
-    }
-  }
-}
-
-function evaluateVotes() {
-  const v1 = gameState.votes['1'];
-  const v2 = gameState.votes['2'];
-  const v3 = gameState.votes['3'];
-
-  // Check if all 3 have submitted
-  if (v1 && v2 && v3) {
-    const isConsensus = (v1 === v2 && v2 === v3);
-    const unanimousChoice = isConsensus ? v1 : null;
-    
-    const previousHappiness = gameState.happiness;
-    if (isConsensus) {
-      gameState.happiness = Math.min(10, gameState.happiness + 1);
-    } else {
-      gameState.happiness = Math.max(0, gameState.happiness - 1);
-    }
-
-    gameState.status = 'revealed';
-    gameState.result = {
-      consensus: isConsensus,
-      unanimousChoice,
-      votes: { ...gameState.votes },
-      previousHappiness,
-      newHappiness: gameState.happiness,
-      dilemmaId: dilemmas[gameState.currentDilemmaIndex]?.id || null,
-      dilemmaTitle: dilemmas[gameState.currentDilemmaIndex]?.title || '',
-      forced: false
+  try {
+    settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
+  } catch (err) {
+    console.error('[SERVER] Error reading settings.json:', err.message);
+    settings = {
+      unanimousFeedback: "Unanimous decision reached! The baby calms down.",
+      splitFeedback: "No consensus reached! The baby becomes uneasy.",
+      lobbyWelcome: "Welcome to Dilemma Baby.",
+      lobbyWaiting: "Waiting for co-custodians ({count}/3 connected)...",
+      lobbyReady: "Session is ready to begin!",
+      lobbyAutoStart: "Starting session in {seconds}s...",
+      queueMessage: "You are in line! Queue position: #{pos}. Waiting for current session to finish...",
+      inactivityWarning: "Are you still there? Session resets in {seconds} seconds...",
+      extendTimeButton: "Extend Time ⏱️",
+      voteLocked: "Decision locked. Awaiting fellow custodians...",
+      sessionCompleted: "All directives resolved. Session concluding...",
+      perspectiveTitles: {
+        "1": "ECOLOGICAL & ENVIRONMENTAL PERSPECTIVE",
+        "2": "SOCIAL TRIAGE & HEALTHCARE PERSPECTIVE",
+        "3": "ALGORITHMIC & DATA AUTONOMY PERSPECTIVE"
+      }
     };
-
-    gameState.history.push({
-      round: gameState.history.length + 1,
-      ...gameState.result,
-      timestamp: new Date().toISOString()
-    });
-
-    startAutoAdvance();
-    broadcastState();
-  } else {
-    // Partial votes broadcast
-    broadcastState();
   }
 }
 
-// MIME types dictionary
-const MIME_TYPES = {
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'application/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.ico': 'image/x-icon',
-  '.wav': 'audio/wav',
-  '.mp3': 'audio/mpeg'
+loadData();
+
+// --- Game State ---
+const gameState = {
+  happiness: 5,               // 0 to 10
+  currentDilemmaIndex: 0,
+  status: 'lobby',            // 'lobby' | 'ready' | 'active' | 'revealed' | 'completed'
+  players: { '1': null, '2': null, '3': null }, // slot -> socket.id
+  queue: [],                  // [socket.id, ...]
+  votes: { '1': null, '2': null, '3': null },
+  result: null,               // { consensus: boolean, unanimousChoice: 'A'|'B', votes, message }
+  inactivityWarning: false
 };
 
+// --- Timers ---
+let inactivityTimer = null;
+let inactivityWarningTimer = null;
+let autoAdvanceTimer = null;
+let lobbyCountdownTimer = null;
+let lobbyCountdownSeconds = 5;
+
+// --- Express Middleware & Static Files ---
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Lightweight /ping endpoint for Render.com uptime monitoring & cold-start prevention
+app.get('/ping', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: Date.now(),
+    happiness: gameState.happiness,
+    activePlayers: Object.values(gameState.players).filter(Boolean).length,
+    queueCount: gameState.queue.length
+  });
+});
+
+// REST API for state inspection
+app.get('/api/state', (req, res) => {
+  res.json(getSanitizedGameState());
+});
+
+app.get('/api/dilemmas', (req, res) => {
+  res.json({ dilemmas });
+});
+
+app.get('/api/settings', (req, res) => {
+  res.json({ settings });
+});
+
+// Helper: Get local network IPs for LAN testing
 function getLocalIpAddresses() {
   const interfaces = os.networkInterfaces();
   const addresses = [];
@@ -169,253 +129,231 @@ function getLocalIpAddresses() {
   return addresses;
 }
 
-// Request Helper to parse JSON body
-function parseJsonBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk;
-      if (body.length > 2e6) { // 2MB limit
-        req.destroy();
-        reject(new Error('Payload too large'));
+// Helper: Broadcast current state to all connected sockets
+function broadcastGameState() {
+  const baseState = getSanitizedGameState();
+
+  // Send tailored perspective to each active slot
+  for (const [slot, socketId] of Object.entries(gameState.players)) {
+    if (socketId) {
+      const socket = io.sockets.sockets.get(socketId);
+      if (socket) {
+        const perspectiveText = getCurrentPerspective(slot);
+        const perspectiveTitle = settings.perspectiveTitles?.[slot] || `PLAYER ${slot} PERSPECTIVE`;
+        socket.emit('game-state', {
+          ...baseState,
+          assignedSlot: slot,
+          isQueued: false,
+          myPerspective: perspectiveText,
+          myPerspectiveTitle: perspectiveTitle,
+          myVote: gameState.votes[slot]
+        });
       }
-    });
-    req.on('end', () => {
-      try {
-        resolve(body ? JSON.parse(body) : {});
-      } catch (err) {
-        reject(err);
-      }
-    });
-    req.on('error', reject);
+    }
+  }
+
+  // Send queue status to waiting room sockets
+  gameState.queue.forEach((socketId, idx) => {
+    const socket = io.sockets.sockets.get(socketId);
+    if (socket) {
+      socket.emit('game-state', {
+        ...baseState,
+        assignedSlot: null,
+        isQueued: true,
+        queuePosition: idx + 1,
+        totalInQueue: gameState.queue.length
+      });
+    }
+  });
+
+  // Send full state to host dashboard
+  io.emit('host:state', {
+    ...baseState,
+    players: gameState.players,
+    queueCount: gameState.queue.length,
+    votes: gameState.votes,
+    dilemmasCount: dilemmas.length,
+    settings
   });
 }
 
-const server = http.createServer(async (req, res) => {
-  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  const pathname = parsedUrl.pathname;
+function getSanitizedGameState() {
+  const currentDilemma = dilemmas[gameState.currentDilemmaIndex] || null;
+  return {
+    happiness: gameState.happiness,
+    currentDilemmaIndex: gameState.currentDilemmaIndex,
+    totalDilemmas: dilemmas.length,
+    status: gameState.status,
+    activePlayersCount: Object.values(gameState.players).filter(Boolean).length,
+    queueCount: gameState.queue.length,
+    currentDilemmaTitle: currentDilemma ? currentDilemma.title : null,
+    choices: currentDilemma ? currentDilemma.choices : [],
+    result: gameState.result,
+    inactivityWarning: gameState.inactivityWarning,
+    settings
+  };
+}
 
-  // CORS headers for local multi-device flexibility
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+function getCurrentPerspective(slot) {
+  const currentDilemma = dilemmas[gameState.currentDilemmaIndex];
+  if (!currentDilemma || !currentDilemma.perspectives) return '';
+  return currentDilemma.perspectives[slot] || '';
+}
 
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
-
-  // -------------------------------------------------------------
-  // SSE Real-Time Endpoint
-  // -------------------------------------------------------------
-  if (pathname === '/api/events') {
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache, no-transform',
-      'Connection': 'keep-alive'
-    });
-
-    sseClients.add(res);
-
-    // Initial state push
-    const currentDilemma = dilemmas[gameState.currentDilemmaIndex] || null;
-    res.write(`data: ${JSON.stringify({
-      ...gameState,
-      totalDilemmas: dilemmas.length,
-      currentDilemma
-    })}\n\n`);
-
-    req.on('close', () => {
-      sseClients.delete(res);
-    });
-    return;
-  }
-
-  // -------------------------------------------------------------
-  // REST API Endpoints
-  // -------------------------------------------------------------
-  if (pathname === '/api/state' && req.method === 'GET') {
-    const currentDilemma = dilemmas[gameState.currentDilemmaIndex] || null;
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      ...gameState,
-      totalDilemmas: dilemmas.length,
-      currentDilemma
-    }));
-    return;
-  }
-
-  if (pathname === '/api/dilemmas' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ dilemmas }));
-    return;
-  }
-
-  if (pathname === '/api/network-info' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      port: PORT,
-      localIps: getLocalIpAddresses()
-    }));
-    return;
-  }
-
-  // Submit a vote from Screen 1, 2, or 3
-  if (pathname === '/api/vote' && req.method === 'POST') {
-    try {
-      const data = await parseJsonBody(req);
-      const screenId = String(data.screenId);
-      const choice = data.choice; // 'A' or 'B'
-
-      if (!['1', '2', '3'].includes(screenId) || !['A', 'B'].includes(choice)) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Invalid screenId or choice' }));
-        return;
-      }
-
-      // Record vote if currently in voting status
-      if (gameState.status === 'voting') {
-        gameState.votes[screenId] = choice;
-        evaluateVotes();
-      }
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, votes: gameState.votes, status: gameState.status }));
-    } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: err.message }));
+// --- Slot Assignment & Queue Management ---
+function assignSlotOrQueue(socket) {
+  // Check if player is already assigned
+  for (const [slot, id] of Object.entries(gameState.players)) {
+    if (id === socket.id) {
+      return { slot, isQueued: false };
     }
-    return;
   }
 
-  // HOST: Reset Experience
-  if (pathname === '/api/host/reset' && req.method === 'POST') {
-    try {
-      await parseJsonBody(req);
-      cancelAutoAdvance();
-      gameState.happiness = 5;
-      gameState.votes = { '1': null, '2': null, '3': null };
-      gameState.status = 'voting';
-      gameState.result = null;
-      gameState.currentDilemmaIndex = 0;
-      broadcastState();
+  // If already in queue
+  const qIdx = gameState.queue.indexOf(socket.id);
+  if (qIdx !== -1) {
+    return { slot: null, isQueued: true, position: qIdx + 1 };
+  }
 
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, message: 'Experience reset to neutral.' }));
-    } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: err.message }));
+  // Check for vacant slot (1, 2, or 3)
+  const vacantSlot = ['1', '2', '3'].find(slot => gameState.players[slot] === null);
+
+  // If slot available and no one waiting in queue
+  if (vacantSlot && gameState.queue.length === 0) {
+    gameState.players[vacantSlot] = socket.id;
+    console.log(`[SLOT] Socket ${socket.id} assigned to Slot ${vacantSlot}`);
+    checkLobbyReadiness();
+    return { slot: vacantSlot, isQueued: false };
+  } else {
+    // Add to queue
+    gameState.queue.push(socket.id);
+    const position = gameState.queue.length;
+    console.log(`[QUEUE] Socket ${socket.id} added to Queue position #${position}`);
+    return { slot: null, isQueued: true, position };
+  }
+}
+
+function removeSocket(socketId) {
+  // Remove from active slots
+  for (const [slot, id] of Object.entries(gameState.players)) {
+    if (id === socketId) {
+      gameState.players[slot] = null;
+      gameState.votes[slot] = null;
+      console.log(`[SLOT] Socket ${socketId} disconnected from Slot ${slot}`);
+
+      // Promote next player from queue if available
+      promoteFromQueue(slot);
+      checkLobbyReadiness();
+      break;
     }
-    return;
   }
 
-  // HOST: Set Happiness Directly
-  if (pathname === '/api/host/set-happiness' && req.method === 'POST') {
-    try {
-      const data = await parseJsonBody(req);
-      const newHappiness = Number(data.happiness);
-      if (isNaN(newHappiness) || newHappiness < 0 || newHappiness > 10) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Happiness must be between 0 and 10' }));
-        return;
-      }
+  // Remove from queue
+  const qIdx = gameState.queue.indexOf(socketId);
+  if (qIdx !== -1) {
+    gameState.queue.splice(qIdx, 1);
+    console.log(`[QUEUE] Socket ${socketId} removed from queue`);
+  }
 
-      gameState.happiness = Math.round(newHappiness);
-      broadcastState();
+  broadcastGameState();
+}
 
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, happiness: gameState.happiness }));
-    } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: err.message }));
+function promoteFromQueue(slot) {
+  if (gameState.queue.length > 0) {
+    const nextSocketId = gameState.queue.shift();
+    gameState.players[slot] = nextSocketId;
+    console.log(`[QUEUE] Socket ${nextSocketId} promoted from queue to Slot ${slot}`);
+
+    const socket = io.sockets.sockets.get(nextSocketId);
+    if (socket) {
+      socket.emit('assigned-slot', { slot, settings });
     }
-    return;
   }
+}
 
-  // HOST: Next Dilemma
-  if (pathname === '/api/host/next-dilemma' && req.method === 'POST') {
-    advanceToNextDilemma();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, currentDilemmaIndex: gameState.currentDilemmaIndex }));
-    return;
-  }
+// --- Autonomous Session Lifecycle ---
+function checkLobbyReadiness() {
+  const activeCount = Object.values(gameState.players).filter(Boolean).length;
 
-  // HOST: Previous Dilemma
-  if (pathname === '/api/host/prev-dilemma' && req.method === 'POST') {
-    cancelAutoAdvance();
-    if (dilemmas.length > 0) {
-      gameState.currentDilemmaIndex = (gameState.currentDilemmaIndex - 1 + dilemmas.length) % dilemmas.length;
+  if (gameState.status === 'lobby' || gameState.status === 'ready') {
+    if (activeCount >= 2) {
+      // 2 or 3 players connected: lobby is ready to start!
+      gameState.status = 'ready';
+      startLobbyCountdown();
+    } else {
+      // Not enough players, reset to waiting
+      gameState.status = 'lobby';
+      cancelLobbyCountdown();
     }
-    gameState.votes = { '1': null, '2': null, '3': null };
-    gameState.status = 'voting';
-    gameState.result = null;
-    broadcastState();
-
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, currentDilemmaIndex: gameState.currentDilemmaIndex }));
-    return;
-  }
-
-  // HOST: Jump to specific dilemma
-  if (pathname === '/api/host/select-dilemma' && req.method === 'POST') {
-    try {
-      const data = await parseJsonBody(req);
-      const idx = Number(data.index);
-      if (isNaN(idx) || idx < 0 || idx >= dilemmas.length) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Invalid dilemma index' }));
-        return;
-      }
-      cancelAutoAdvance();
-      gameState.currentDilemmaIndex = idx;
-      gameState.votes = { '1': null, '2': null, '3': null };
-      gameState.status = 'voting';
-      gameState.result = null;
-      broadcastState();
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, currentDilemmaIndex: gameState.currentDilemmaIndex }));
-    } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: err.message }));
+  } else if (gameState.status === 'active') {
+    // If during an active game all players leave
+    if (activeCount === 0) {
+      resetSession(false);
     }
-    return;
   }
+}
 
-  // HOST: Reopen / Restart current dilemma round
-  if (pathname === '/api/host/reopen-voting' && req.method === 'POST') {
-    cancelAutoAdvance();
-    gameState.votes = { '1': null, '2': null, '3': null };
-    gameState.status = 'voting';
-    gameState.result = null;
-    broadcastState();
+function startLobbyCountdown() {
+  if (lobbyCountdownTimer) return; // Already running
 
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, message: 'Voting reopened for current directive' }));
-    return;
-  }
+  lobbyCountdownSeconds = 5;
+  console.log('[LOBBY] 2 or 3 players present. Auto-starting session in 5s...');
 
-  // HOST: Force Reveal
-  if (pathname === '/api/host/force-reveal' && req.method === 'POST') {
-    // Only count participants who actually cast an answer.
-    // If one of 3 has not answered, it is disregarded in consensus calculation.
-    const activeEntries = Object.entries(gameState.votes).filter(([id, val]) => val !== null);
-    const activeVotes = activeEntries.map(([id, val]) => val);
+  io.emit('lobby-countdown', { seconds: lobbyCountdownSeconds });
 
-    let isConsensus = false;
-    let unanimousChoice = null;
+  lobbyCountdownTimer = setInterval(() => {
+    lobbyCountdownSeconds--;
+    io.emit('lobby-countdown', { seconds: lobbyCountdownSeconds });
 
-    if (activeVotes.length > 0) {
-      // Check if all who submitted cast the exact same choice
-      isConsensus = activeVotes.every(v => v === activeVotes[0]);
-      if (isConsensus) {
-        unanimousChoice = activeVotes[0];
-      }
+    if (lobbyCountdownSeconds <= 0) {
+      cancelLobbyCountdown();
+      startSession();
     }
+  }, 1000);
+}
+
+function cancelLobbyCountdown() {
+  if (lobbyCountdownTimer) {
+    clearInterval(lobbyCountdownTimer);
+    lobbyCountdownTimer = null;
+  }
+}
+
+function startSession() {
+  cancelLobbyCountdown();
+  clearAllTimers();
+
+  gameState.status = 'active';
+  gameState.currentDilemmaIndex = 0;
+  gameState.votes = { '1': null, '2': null, '3': null };
+  gameState.result = null;
+  gameState.inactivityWarning = false;
+
+  console.log('[SESSION] Started autonomous dilemma session.');
+
+  resetInactivityTimer();
+  broadcastGameState();
+}
+
+function checkVotesAndEvaluate() {
+  // Only evaluate active players
+  const activeSlots = Object.entries(gameState.players)
+    .filter(([slot, id]) => id !== null)
+    .map(([slot]) => slot);
+
+  if (activeSlots.length === 0) return;
+
+  const allActiveVoted = activeSlots.every(slot => gameState.votes[slot] !== null);
+
+  if (allActiveVoted && gameState.status === 'active') {
+    clearInactivityTimer();
+
+    const activeVotes = activeSlots.map(slot => gameState.votes[slot]);
+    const isUnanimous = activeVotes.every(v => v === activeVotes[0]);
+    const unanimousChoice = isUnanimous ? activeVotes[0] : null;
 
     const previousHappiness = gameState.happiness;
-    if (isConsensus) {
+    if (isUnanimous) {
       gameState.happiness = Math.min(10, gameState.happiness + 1);
     } else {
       gameState.happiness = Math.max(0, gameState.happiness - 1);
@@ -423,168 +361,283 @@ const server = http.createServer(async (req, res) => {
 
     gameState.status = 'revealed';
     gameState.result = {
-      consensus: isConsensus,
+      consensus: isUnanimous,
       unanimousChoice,
       votes: { ...gameState.votes },
-      activeVoteCount: activeVotes.length,
       previousHappiness,
       newHappiness: gameState.happiness,
-      dilemmaId: dilemmas[gameState.currentDilemmaIndex]?.id || null,
-      dilemmaTitle: dilemmas[gameState.currentDilemmaIndex]?.title || '',
-      forced: true
+      message: isUnanimous ? settings.unanimousFeedback : settings.splitFeedback
     };
 
-    gameState.history.push({
-      round: gameState.history.length + 1,
-      ...gameState.result,
-      timestamp: new Date().toISOString()
+    console.log(`[VOTE EVALUATION] Unanimous: ${isUnanimous} | Happiness: ${gameState.happiness}`);
+
+    // Pulse event for Local Hub (TouchDesigner / Arduino)
+    io.emit('happiness-update', {
+      happiness: gameState.happiness,
+      previousHappiness,
+      change: isUnanimous ? +1 : -1,
+      reason: isUnanimous ? 'unanimous' : 'split'
     });
 
-    startAutoAdvance();
-    broadcastState();
+    io.emit('pulse', {
+      type: isUnanimous ? 'consensus' : 'conflict'
+    });
 
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, result: gameState.result }));
-    return;
-  }
+    broadcastGameState();
 
-  // HOST: Configure Auto-Advance
-  if (pathname === '/api/host/configure-auto-advance' && req.method === 'POST') {
-    try {
-      const data = await parseJsonBody(req);
-      if (typeof data.enabled === 'boolean') {
-        autoAdvanceEnabled = data.enabled;
-        gameState.autoAdvanceEnabled = autoAdvanceEnabled;
-      }
-      if (data.duration && !isNaN(Number(data.duration))) {
-        autoAdvanceDuration = Math.max(1, Math.min(60, Number(data.duration)));
-        gameState.autoAdvanceDuration = autoAdvanceDuration;
-      }
-      if (!autoAdvanceEnabled) {
-        cancelAutoAdvance();
-      } else if (gameState.status === 'revealed' && !autoAdvanceTimer) {
-        startAutoAdvance();
-      }
-      broadcastState();
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, enabled: autoAdvanceEnabled, duration: autoAdvanceDuration }));
-    } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: err.message }));
-    }
-    return;
-  }
-
-  // HOST: Skip Countdown
-  if (pathname === '/api/host/skip-countdown' && req.method === 'POST') {
-    advanceToNextDilemma();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true }));
-    return;
-  }
-
-  // HOST: Pause Countdown
-  if (pathname === '/api/host/pause-countdown' && req.method === 'POST') {
-    cancelAutoAdvance();
-    broadcastState();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true }));
-    return;
-  }
-
-  // HOST: Save Dilemmas (Admin Content Management)
-  if (pathname === '/api/host/save-dilemmas' && req.method === 'POST') {
-    try {
-      const data = await parseJsonBody(req);
-      if (!Array.isArray(data.dilemmas)) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'dilemmas must be an array' }));
-        return;
-      }
-
-      dilemmas = data.dilemmas;
-      // Persist to file
-      fs.writeFileSync(DATA_FILE, JSON.stringify(dilemmas, null, 2), 'utf-8');
-
-      // Validate current index
-      if (gameState.currentDilemmaIndex >= dilemmas.length) {
-        gameState.currentDilemmaIndex = Math.max(0, dilemmas.length - 1);
-      }
-
-      broadcastState();
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, count: dilemmas.length }));
-    } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: err.message }));
-    }
-    return;
-  }
-
-  // -------------------------------------------------------------
-  // Clean URL Rewrites & Static File Server
-  // -------------------------------------------------------------
-  let filePath = '';
-  if (pathname === '/' || pathname === '/index.html') {
-    filePath = path.join(PUBLIC_DIR, 'index.html');
-  } else if (pathname === '/host' || pathname === '/host.html' || pathname === '/admin') {
-    filePath = path.join(PUBLIC_DIR, 'host.html');
-  } else if (pathname === '/screen/1') {
-    res.writeHead(302, { 'Location': '/screen.html?id=1' });
-    res.end();
-    return;
-  } else if (pathname === '/screen/2') {
-    res.writeHead(302, { 'Location': '/screen.html?id=2' });
-    res.end();
-    return;
-  } else if (pathname === '/screen/3') {
-    res.writeHead(302, { 'Location': '/screen.html?id=3' });
-    res.end();
-    return;
+    // Auto-advance to next dilemma after 6 seconds
+    autoAdvanceTimer = setTimeout(() => {
+      advanceToNextDilemma();
+    }, 6000);
   } else {
-    filePath = path.join(PUBLIC_DIR, pathname);
+    // Partial votes updated
+    broadcastGameState();
   }
+}
 
-  // Safe path check to prevent path traversal
-  const normalizedPath = path.normalize(filePath);
-  if (!normalizedPath.startsWith(PUBLIC_DIR)) {
-    res.writeHead(403);
-    res.end('Access Denied');
-    return;
+function advanceToNextDilemma() {
+  clearTimeout(autoAdvanceTimer);
+  autoAdvanceTimer = null;
+
+  if (gameState.currentDilemmaIndex + 1 < dilemmas.length) {
+    gameState.currentDilemmaIndex++;
+    gameState.status = 'active';
+    gameState.votes = { '1': null, '2': null, '3': null };
+    gameState.result = null;
+    gameState.inactivityWarning = false;
+
+    console.log(`[ADVANCE] Transitioned to Directive #${gameState.currentDilemmaIndex + 1}`);
+    resetInactivityTimer();
+    broadcastGameState();
+  } else {
+    // All dilemmas completed
+    console.log('[COMPLETED] All dilemmas finished. Session complete.');
+    gameState.status = 'completed';
+    gameState.result = {
+      consensus: true,
+      message: settings.sessionCompleted || "All directives resolved. Session concluding..."
+    };
+    broadcastGameState();
+
+    setTimeout(() => {
+      resetSession(true);
+    }, 5000);
   }
+}
 
-  fs.stat(normalizedPath, (err, stats) => {
-    if (err || !stats.isFile()) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('404 Not Found');
-      return;
+// --- Inactivity Timer (30s Idle + 6s Warning) ---
+function resetInactivityTimer() {
+  clearInactivityTimer();
+
+  if (gameState.status !== 'active') return;
+
+  // 30 seconds of inactivity triggers warning modal
+  inactivityTimer = setTimeout(() => {
+    triggerInactivityWarning();
+  }, 30000);
+}
+
+function triggerInactivityWarning() {
+  if (gameState.status !== 'active') return;
+
+  gameState.inactivityWarning = true;
+  console.log('[INACTIVITY] 30s elapsed without input. Triggering 6s modal countdown...');
+
+  io.emit('inactivity-warning', { seconds: 6 });
+  broadcastGameState();
+
+  inactivityWarningTimer = setTimeout(() => {
+    console.log('[INACTIVITY] 6s warning elapsed without response. Resetting session...');
+    resetSession(false);
+  }, 6000);
+}
+
+function extendTime() {
+  console.log('[INACTIVITY] Player requested time extension. Resetting 30s timer.');
+  gameState.inactivityWarning = false;
+  clearTimeout(inactivityWarningTimer);
+  inactivityWarningTimer = null;
+
+  io.emit('inactivity-cleared');
+  resetInactivityTimer();
+  broadcastGameState();
+}
+
+function clearInactivityTimer() {
+  if (inactivityTimer) {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = null;
+  }
+  if (inactivityWarningTimer) {
+    clearTimeout(inactivityWarningTimer);
+    inactivityWarningTimer = null;
+  }
+  gameState.inactivityWarning = false;
+}
+
+function clearAllTimers() {
+  clearInactivityTimer();
+  cancelLobbyCountdown();
+  if (autoAdvanceTimer) {
+    clearTimeout(autoAdvanceTimer);
+    autoAdvanceTimer = null;
+  }
+}
+
+function resetSession(promoteWaiting = false) {
+  clearAllTimers();
+
+  gameState.happiness = 5;
+  gameState.currentDilemmaIndex = 0;
+  gameState.votes = { '1': null, '2': null, '3': null };
+  gameState.status = 'lobby';
+  gameState.result = null;
+  gameState.inactivityWarning = false;
+
+  // If resetting upon completion or timeout, we can promote queued players into slots
+  if (promoteWaiting && gameState.queue.length > 0) {
+    // Release existing slots to give queue a turn
+    for (const slot of ['1', '2', '3']) {
+      const oldId = gameState.players[slot];
+      if (oldId && gameState.queue.length > 0) {
+        gameState.players[slot] = null;
+        promoteFromQueue(slot);
+        // Put old player at the back of the queue
+        gameState.queue.push(oldId);
+      }
     }
+  }
 
-    const ext = path.extname(normalizedPath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+  console.log('[RESET] Session reset to baseline.');
 
-    res.writeHead(200, { 'Content-Type': contentType });
-    const stream = fs.createReadStream(normalizedPath);
-    stream.pipe(res);
+  io.emit('happiness-update', {
+    happiness: 5,
+    change: 0,
+    reason: 'reset'
+  });
+
+  checkLobbyReadiness();
+  broadcastGameState();
+}
+
+// --- Socket.io Event Handling ---
+io.on('connection', (socket) => {
+  console.log(`[SOCKET] Connected: ${socket.id}`);
+
+  // Assign slot or queue
+  const assignment = assignSlotOrQueue(socket);
+  socket.emit('init-state', {
+    ...assignment,
+    settings,
+    state: getSanitizedGameState()
+  });
+
+  broadcastGameState();
+
+  // Player Cast Vote
+  socket.on('cast-vote', (data) => {
+    // Determine player's slot
+    const slot = Object.keys(gameState.players).find(s => gameState.players[s] === socket.id);
+    if (!slot) return;
+
+    if (gameState.status === 'active' && ['A', 'B'].includes(data?.choice)) {
+      gameState.votes[slot] = data.choice;
+      console.log(`[VOTE] Player ${slot} voted: ${data.choice}`);
+
+      // Any vote activity resets inactivity countdown
+      resetInactivityTimer();
+      checkVotesAndEvaluate();
+    }
+  });
+
+  // Player Manual Start (skip 5s lobby countdown)
+  socket.on('player-start', () => {
+    const activeCount = Object.values(gameState.players).filter(Boolean).length;
+    if (activeCount >= 2 && (gameState.status === 'lobby' || gameState.status === 'ready')) {
+      console.log(`[START] Player ${socket.id} triggered immediate start.`);
+      startSession();
+    }
+  });
+
+  // Player Extend Time
+  socket.on('extend-time', () => {
+    extendTime();
+  });
+
+  // Host Actions
+  socket.on('host:skip-dilemma', () => {
+    advanceToNextDilemma();
+  });
+
+  socket.on('host:set-happiness', (data) => {
+    const val = Number(data?.happiness);
+    if (!isNaN(val) && val >= 0 && val <= 10) {
+      const prev = gameState.happiness;
+      gameState.happiness = Math.round(val);
+      io.emit('happiness-update', {
+        happiness: gameState.happiness,
+        previousHappiness: prev,
+        change: gameState.happiness - prev,
+        reason: 'host-override'
+      });
+      broadcastGameState();
+    }
+  });
+
+  socket.on('host:reset-session', () => {
+    resetSession(false);
+  });
+
+  socket.on('host:save-dilemmas', (data) => {
+    if (Array.isArray(data?.dilemmas)) {
+      dilemmas = data.dilemmas;
+      try {
+        fs.writeFileSync(DILEMMAS_FILE, JSON.stringify(dilemmas, null, 2), 'utf-8');
+        console.log(`[CMS] Saved ${dilemmas.length} dilemmas to ${DILEMMAS_FILE}`);
+        broadcastGameState();
+        socket.emit('host:saved-ack', { success: true, count: dilemmas.length });
+      } catch (err) {
+        socket.emit('host:saved-ack', { success: false, error: err.message });
+      }
+    }
+  });
+
+  socket.on('host:save-settings', (data) => {
+    if (data?.settings && typeof data.settings === 'object') {
+      settings = { ...settings, ...data.settings };
+      try {
+        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
+        console.log(`[CMS] Saved settings to ${SETTINGS_FILE}`);
+        broadcastGameState();
+        socket.emit('host:saved-settings-ack', { success: true });
+      } catch (err) {
+        socket.emit('host:saved-settings-ack', { success: false, error: err.message });
+      }
+    }
+  });
+
+  // Disconnection
+  socket.on('disconnect', () => {
+    console.log(`[SOCKET] Disconnected: ${socket.id}`);
+    removeSocket(socket.id);
   });
 });
 
+// --- Server Boot ---
 server.listen(PORT, '0.0.0.0', () => {
   const ips = getLocalIpAddresses();
   console.log('\n=============================================================');
-  console.log('  AUTONOMY BABY - SOCIETY 5.0 INSTALLATION SERVER ACTIVE     ');
-  console.log('  Exhibition Theme: "Reimagining Autonomy"                   ');
+  console.log('  DILEMMA BABY - SOCIETY 5.0 FESTIVAL SERVER ACTIVE          ');
+  console.log('  Theme: "Reimagining Autonomy"                             ');
   console.log('=============================================================');
+  console.log(`Port:                ${PORT}`);
   console.log(`Local Access:        http://localhost:${PORT}`);
   ips.forEach(ip => {
     console.log(`Network (LAN):       http://${ip}:${PORT}`);
   });
   console.log('-------------------------------------------------------------');
-  console.log(`Screen 1:            http://localhost:${PORT}/screen.html?id=1`);
-  console.log(`Screen 2:            http://localhost:${PORT}/screen.html?id=2`);
-  console.log(`Screen 3:            http://localhost:${PORT}/screen.html?id=3`);
-  console.log(`Host & Admin Screen: http://localhost:${PORT}/host.html`);
+  console.log(`Player Join URL:     http://localhost:${PORT}/`);
+  console.log(`Host Dashboard:      http://localhost:${PORT}/host.html`);
+  console.log(`Health Keep-Alive:   http://localhost:${PORT}/ping`);
   console.log('=============================================================\n');
 });
