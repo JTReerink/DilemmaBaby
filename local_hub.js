@@ -240,6 +240,7 @@ const socket = io(SERVER_URL, {
 
 socket.on('connect', () => {
   console.log(`[SOCKET] Connected to Dilemma Baby server at: ${SERVER_URL} (ID: ${socket.id})`);
+  socket.emit('register-hub');
   sendOscMessage('/baby/connected', 1);
 });
 

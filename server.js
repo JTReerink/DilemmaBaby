@@ -165,6 +165,13 @@ function broadcastGameState() {
     }
   });
 
+  // Send state to registered Local Hub sockets
+  for (const [, s] of io.sockets.sockets) {
+    if (s.isHub) {
+      s.emit('game-state', baseState);
+    }
+  }
+
   // Send full state to host dashboard with detailed queue information
   const queueDetails = gameState.queue.map((socketId, idx) => ({
     id: socketId,
@@ -207,8 +214,12 @@ function getCurrentPerspective(slot) {
 }
 
 // --- Slot Assignment & Queue Management ---
-// --- Slot Assignment & Queue Management ---
 function assignSlotOrQueue(socket) {
+  // Never assign hub or host sockets as players
+  if (socket.isHub || socket.isHost) {
+    return { slot: null, isQueued: false };
+  }
+
   // Check if player is already assigned
   for (const [slot, id] of Object.entries(gameState.players)) {
     if (id === socket.id) {
@@ -225,9 +236,9 @@ function assignSlotOrQueue(socket) {
   // Check for vacant slot (1, 2, or 3)
   const vacantSlot = ['1', '2', '3'].find(slot => gameState.players[slot] === null);
 
-  // If game is actively in progress with a vacant slot and empty queue:
+  // If game is actively in progress with a vacant slot:
   // Present 3rd player with mid-game prompt (Join Current Game vs Wait for Next Game)
-  if ((gameState.status === 'active' || gameState.status === 'revealed') && vacantSlot && gameState.queue.length === 0) {
+  if ((gameState.status === 'active' || gameState.status === 'revealed') && vacantSlot) {
     gameState.pendingMidGame[socket.id] = vacantSlot;
     console.log(`[MID-GAME] Socket ${socket.id} presented mid-game choice for Slot ${vacantSlot}`);
     return { slot: null, isQueued: false, pendingMidGame: true, vacantSlot };
@@ -255,14 +266,18 @@ function removeSocket(socketId) {
   }
 
   // Remove from active slots
+  let removedFromActiveSlot = false;
   for (const [slot, id] of Object.entries(gameState.players)) {
     if (id === socketId) {
       gameState.players[slot] = null;
       gameState.votes[slot] = null;
+      removedFromActiveSlot = true;
       console.log(`[SLOT] Socket ${socketId} disconnected from Slot ${slot}`);
 
-      // Promote next player from queue if available
-      promoteFromQueue(slot);
+      // Only auto-promote from queue if in lobby/ready
+      if (gameState.status === 'lobby' || gameState.status === 'ready') {
+        promoteFromQueue(slot);
+      }
       checkLobbyReadiness();
       break;
     }
@@ -275,7 +290,12 @@ function removeSocket(socketId) {
     console.log(`[QUEUE] Socket ${socketId} removed from queue`);
   }
 
-  broadcastGameState();
+  // If an active player disconnected mid-round, check if remaining active players have all voted
+  if (removedFromActiveSlot && gameState.status === 'active') {
+    checkVotesAndEvaluate();
+  } else {
+    broadcastGameState();
+  }
 }
 
 function promoteFromQueue(slot) {
@@ -556,28 +576,53 @@ function resetSession(promoteWaiting = false) {
 io.on('connection', (socket) => {
   console.log(`[SOCKET] Connected: ${socket.id}`);
 
-  // Assign slot or queue
-  const assignment = assignSlotOrQueue(socket);
-  socket.emit('init-state', {
-    ...assignment,
-    settings,
-    state: getSanitizedGameState()
+  // Send current state to newly connected host/observers without assigning a player slot
+  broadcastGameState();
+
+  // 1. Explicit Role Registration: Local Hardware Hub
+  socket.on('register-hub', () => {
+    socket.isHub = true;
+    console.log(`[HUB] Registered Local Hub socket: ${socket.id}`);
+    removeSocket(socket.id);
+    socket.emit('game-state', getSanitizedGameState());
   });
 
-  // If mid-game 3rd player join detected, send prompt
-  if (assignment.pendingMidGame) {
-    const currentDilemma = dilemmas[gameState.currentDilemmaIndex];
-    socket.emit('mid-game-prompt', {
-      availableSlot: assignment.vacantSlot,
-      directiveTitle: currentDilemma ? currentDilemma.title : 'Active Directive',
-      directiveIndex: gameState.currentDilemmaIndex + 1
-    });
-  }
+  // 2. Explicit Role Registration: Host Dashboard
+  socket.on('register-host', () => {
+    socket.isHost = true;
+    console.log(`[HOST] Registered Host Dashboard socket: ${socket.id}`);
+    removeSocket(socket.id);
+    broadcastGameState();
+  });
 
-  broadcastGameState();
+  // 3. Explicit Player Join (ONLY mobile player UI emits 'join-game')
+  socket.on('join-game', () => {
+    if (socket.isHub || socket.isHost) return;
+    socket.isPlayer = true;
+
+    const assignment = assignSlotOrQueue(socket);
+    socket.emit('init-state', {
+      ...assignment,
+      settings,
+      state: getSanitizedGameState()
+    });
+
+    // If mid-game 3rd player join detected, send prompt
+    if (assignment.pendingMidGame) {
+      const currentDilemma = dilemmas[gameState.currentDilemmaIndex];
+      socket.emit('mid-game-prompt', {
+        availableSlot: assignment.vacantSlot,
+        directiveTitle: currentDilemma ? currentDilemma.title : 'Active Directive',
+        directiveIndex: gameState.currentDilemmaIndex + 1
+      });
+    }
+
+    broadcastGameState();
+  });
 
   // Mid-Game Joining Decision (3rd Player)
   socket.on('choose-mid-game', (data) => {
+    if (socket.isHub || socket.isHost) return;
     const vacantSlot = gameState.pendingMidGame[socket.id];
     delete gameState.pendingMidGame[socket.id];
 
@@ -704,8 +749,40 @@ io.on('connection', (socket) => {
   });
 
   socket.on('host:reset-session', () => {
+    socket.isHost = true;
     resetSession(false);
   });
+
+  // Host Force Reset Lobby / Kick All Players
+  function handleHostResetLobby() {
+    socket.isHost = true;
+    clearAllTimers();
+
+    gameState.players = { '1': null, '2': null, '3': null };
+    gameState.queue = [];
+    gameState.pendingMidGame = {};
+    gameState.votes = { '1': null, '2': null, '3': null };
+    gameState.happiness = 5;
+    gameState.currentDilemmaIndex = 0;
+    gameState.status = 'lobby';
+    gameState.result = null;
+    gameState.inactivityWarning = false;
+
+    console.log('[HOST RESET LOBBY] Cleared all active players, waiting queue, and votes. Happiness reset to 5.');
+
+    io.emit('happiness-update', {
+      happiness: 5,
+      previousHappiness: 5,
+      change: 0,
+      reason: 'reset'
+    });
+
+    io.emit('lobby-force-reset');
+    broadcastGameState();
+  }
+
+  socket.on('host-reset-lobby', handleHostResetLobby);
+  socket.on('host:reset-lobby', handleHostResetLobby);
 
   socket.on('host:save-dilemmas', (data) => {
     if (Array.isArray(data?.dilemmas)) {

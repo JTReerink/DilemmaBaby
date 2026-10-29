@@ -24,7 +24,7 @@
           <span class="vital-score" id="vital-score">5/10</span>
         </div>
         <button class="btn-extend-timer" id="btn-extend-time" title="Reset idle timer">
-          ⏱️ Extend
+          Extend Time ⏱️
         </button>
       </div>
     </header>
@@ -95,6 +95,13 @@
         <div id="lobby-action-box" style="width: 100%; display: none; margin-top: 18px;">
           <button class="btn-main" id="btn-start-now" style="font-size: 1.05rem; padding: 16px; letter-spacing: 0.04em;">
             ▶ Start Game
+          </button>
+        </div>
+
+        <!-- Rejoin Lobby button (Shown after host force-resets lobby) -->
+        <div id="lobby-rejoin-box" style="width: 100%; display: none; margin-top: 18px;">
+          <button class="btn-main" id="btn-rejoin-lobby" style="font-size: 1.05rem; padding: 16px; letter-spacing: 0.04em;">
+            ↻ Join Lobby
           </button>
         </div>
       </div>
@@ -193,16 +200,16 @@
     </section>
 
     <!-- ================================================================= -->
-    <!-- 7. VIEW: SESSION ENDED (INACTIVITY CONFIRMATION SCREEN)           -->
+    <!-- 7. VIEW: SESSION EXPIRED (INACTIVITY CONFIRMATION SCREEN)         -->
     <!-- ================================================================= -->
     <section class="view-section" id="view-inactivity-ended">
       <div class="card" style="text-align: center; padding: 40px 20px;">
         <div style="font-size: 2.6rem; margin-bottom: 14px;">⏳</div>
         <h2 style="font-size: 1.45rem; font-weight: 800; margin-bottom: 12px; color: var(--warning-amber);">
-          Session Ended
+          Session Expired
         </h2>
         <p style="font-size: 0.95rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 26px;">
-          Session ended due to inactivity. The game has stopped.
+          Session expired due to inactivity. The game has stopped.
         </p>
         <button class="btn-main" id="btn-return-lobby" style="font-size: 1rem; padding: 15px;">
           Return to Lobby
@@ -229,7 +236,7 @@
       </p>
       <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 8px;">
         <button class="btn-main" id="btn-join-current" style="background: linear-gradient(135deg, var(--happy-green), #059669); font-size: 0.95rem; padding: 14px;">
-          ✓ Join Current Session
+          ✓ Join Current Game
         </button>
         <button class="choice-btn" id="btn-wait-next" style="text-align: center; justify-content: center; padding: 13px; width: 100%;">
           <span style="font-weight: 600;">⏳ Wait for Next Game</span>

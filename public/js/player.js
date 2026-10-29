@@ -39,6 +39,8 @@
   const slotInd3 = document.getElementById('slot-ind-3');
   const lobbyActionBox = document.getElementById('lobby-action-box');
   const btnStartNow = document.getElementById('btn-start-now');
+  const lobbyRejoinBox = document.getElementById('lobby-rejoin-box');
+  const btnRejoinLobby = document.getElementById('btn-rejoin-lobby');
 
   // Dilemma Elements
   const dilemmaIndexLabel = document.getElementById('dilemma-index-label');
@@ -114,6 +116,8 @@
   // --- Connection Status Handlers ---
   socket.on('connect', () => {
     console.log('[SOCKET] Connected to bio-server with ID:', socket.id);
+    // Explicitly join as a mobile player (prevents hub/host from being counted as players)
+    socket.emit('join-game');
   });
 
   socket.on('connect_error', (err) => {
@@ -131,6 +135,7 @@
     mySlot = data.slot;
     isQueued = !!data.isQueued;
     settings = data.settings || {};
+    if (lobbyRejoinBox) lobbyRejoinBox.style.display = 'none';
     updateFromState(data.state);
   });
 
@@ -138,7 +143,33 @@
     mySlot = data.slot;
     isQueued = false;
     settings = data.settings || settings;
+    if (lobbyRejoinBox) lobbyRejoinBox.style.display = 'none';
     console.log('[SLOT] Promoted from queue! Assigned to Slot:', mySlot);
+  });
+
+  // --- Host Force Lobby Reset (Kicks all players back to lobby screen) ---
+  socket.on('lobby-force-reset', () => {
+    console.log('[RESET] Host reset the lobby. Clearing local slot state.');
+    mySlot = null;
+    isQueued = false;
+    myVote = null;
+
+    hideInactivityModal();
+    showMidGameModal(false);
+
+    if (vitalScoreEl) vitalScoreEl.textContent = '5/10';
+    showView(viewLobby);
+
+    if (lobbySlotBadge) lobbySlotBadge.textContent = 'Lobby Reset';
+    if (slotInd1) slotInd1.classList.remove('active');
+    if (slotInd2) slotInd2.classList.remove('active');
+    if (slotInd3) slotInd3.classList.remove('active');
+
+    if (lobbyStatusMsg) {
+      lobbyStatusMsg.textContent = 'Lobby was reset by the facilitator. Tap below to join the session.';
+    }
+    if (lobbyActionBox) lobbyActionBox.style.display = 'none';
+    if (lobbyRejoinBox) lobbyRejoinBox.style.display = 'block';
   });
 
   // --- Game State Broadcast ---
@@ -365,10 +396,17 @@
   btnChoiceA.addEventListener('click', () => submitChoice('A'));
   btnChoiceB.addEventListener('click', () => submitChoice('B'));
 
-  // --- Lobby Manual Start ---
+  // --- Lobby Manual Start & Rejoin ---
   if (btnStartNow) {
     btnStartNow.addEventListener('click', () => {
       socket.emit('player-start');
+    });
+  }
+
+  if (btnRejoinLobby) {
+    btnRejoinLobby.addEventListener('click', () => {
+      lobbyRejoinBox.style.display = 'none';
+      socket.emit('join-game');
     });
   }
 
@@ -395,10 +433,13 @@
     });
   }
 
-  // --- Return to Lobby from Session Ended Screen ---
+  // --- Return to Lobby from Session Expired Screen ---
   if (btnReturnLobby) {
     btnReturnLobby.addEventListener('click', () => {
       socket.emit('return-to-lobby');
+      if (!mySlot) {
+        socket.emit('join-game');
+      }
       showView(viewLobby);
     });
   }
@@ -439,7 +480,7 @@
     if (inactivityCountdown) inactivityCountdown.textContent = `${sec}s`;
     if (btnImHere) btnImHere.textContent = `Yes, Keep Playing (${sec}s remaining)`;
     if (btnExtendTime) {
-      btnExtendTime.textContent = `⏱️ Extend (${sec}s)`;
+      btnExtendTime.textContent = `Extend Time (${sec}s)`;
       btnExtendTime.style.borderColor = 'var(--distress-red)';
       btnExtendTime.style.color = 'var(--distress-red)';
     }
@@ -452,7 +493,7 @@
       inactivityInterval = null;
     }
     if (btnExtendTime) {
-      btnExtendTime.textContent = '⏱️ Extend';
+      btnExtendTime.textContent = settings.extendTimeButton || 'Extend Time ⏱️';
       btnExtendTime.style.borderColor = '';
       btnExtendTime.style.color = '';
     }

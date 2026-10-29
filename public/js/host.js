@@ -26,6 +26,7 @@
   const happinessSlider = document.getElementById('happiness-slider');
   const btnDecHappiness = document.getElementById('btn-dec-happiness');
   const btnIncHappiness = document.getElementById('btn-inc-happiness');
+  const btnResetLobby = document.getElementById('btn-reset-lobby');
   const btnResetSession = document.getElementById('btn-reset-session');
 
   const hostGameStatus = document.getElementById('host-game-status');
@@ -135,6 +136,11 @@
   }
 
   // --- Socket Listeners ---
+  socket.on('connect', () => {
+    socket.emit('register-host');
+    loadDilemmas();
+  });
+
   socket.on('host:state', (state) => {
     currentState = state;
     if (state.settings) currentSettings = state.settings;
@@ -217,6 +223,14 @@
     const choiceB = choices.find(c => c.id === 'B') || { text: '-' };
     if (inspectorOptA) inspectorOptA.textContent = choiceA.text;
     if (inspectorOptB) inspectorOptB.textContent = choiceB.text;
+
+    // Perspectives in Live Inspector
+    const activeDilemma = allDilemmas[state.currentDilemmaIndex || 0];
+    if (activeDilemma && activeDilemma.perspectives) {
+      if (inspectorP1) inspectorP1.textContent = activeDilemma.perspectives['1'] || '-';
+      if (inspectorP2) inspectorP2.textContent = activeDilemma.perspectives['2'] || '-';
+      if (inspectorP3) inspectorP3.textContent = activeDilemma.perspectives['3'] || '-';
+    }
   }
 
   function renderHostQueue(queueDetails, players) {
@@ -322,6 +336,15 @@
   btnSkipDilemma.addEventListener('click', () => {
     socket.emit('host:skip-dilemma');
   });
+
+  if (btnResetLobby) {
+    btnResetLobby.addEventListener('click', () => {
+      if (confirm('Reset Lobby & Kick All Players? This clears all active player slots, empties the waiting queue, and resets happiness to 5.')) {
+        socket.emit('host-reset-lobby');
+        showToast('Lobby reset — all players kicked & happiness reset to 5.');
+      }
+    });
+  }
 
   btnResetSession.addEventListener('click', () => {
     if (confirm('Reset entire session to baseline (Happiness = 5, clear active votes, return to lobby)?')) {

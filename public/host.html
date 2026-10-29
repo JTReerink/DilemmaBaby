@@ -28,9 +28,13 @@
         <button class="tab-btn" id="tab-texts">UI Texts &amp; Prompts</button>
       </nav>
 
-      <!-- Emergency Reset Button -->
-      <div class="header-actions">
-        <button class="btn btn-danger" id="btn-reset-session">
+      <!-- Emergency Reset Buttons -->
+      <div class="header-actions" style="display: flex; gap: 10px;">
+        <button class="btn btn-danger" id="btn-reset-lobby" title="Clear all active players, empty waiting queue, and reset happiness to 5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>
+          Reset Lobby / Kick All
+        </button>
+        <button class="btn" id="btn-reset-session" title="Restart session with current players">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
           Reset Session
         </button>
