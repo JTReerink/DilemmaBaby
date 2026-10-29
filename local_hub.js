@@ -8,7 +8,6 @@ const { io } = require('socket.io-client');
 const osc = require('node-osc');
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline');
-let currentHappiness = -1;
 
 // --- Command Line Argument Parsing ---
 const args = process.argv.slice(2);
@@ -226,9 +225,30 @@ autoScanInterval = setInterval(() => {
 connectSerial();
 
 // ============================================================================
-// 3. SOCKET.IO CLIENT (SERVER CONNECTION)
+// 3. CENTRAL BEAT SYNCHRONIZATION CLOCK & SOCKET.IO CLIENT
 // ============================================================================
-currentHappiness = 5;
+let currentHappiness = 5;
+let beatInterval = null;
+
+function restartBeatClock() {
+  if (beatInterval) {
+    clearInterval(beatInterval);
+    beatInterval = null;
+  }
+
+  // happiness = 10 -> 1200 ms (~50 BPM, calm)
+  // happiness = 0  -> 420 ms (~140 BPM, rapid/distress)
+  const clampedHappiness = Math.max(0, Math.min(10, currentHappiness));
+  const intervalMs = Math.round(420 + (clampedHappiness / 10) * (1200 - 420));
+  const bpm = Math.round(60000 / intervalMs);
+
+  console.log(`[BEAT CLOCK] Synchronized to Happiness ${clampedHappiness}/10 -> ${intervalMs}ms (${bpm} BPM)`);
+
+  beatInterval = setInterval(() => {
+    sendOscMessage('/baby/beat', 1);
+    sendSerialCommand('BEAT');
+  }, intervalMs);
+}
 
 const socket = io(SERVER_URL, {
   transports: ['websocket', 'polling'],
@@ -243,6 +263,7 @@ socket.on('connect', () => {
   console.log(`[SOCKET] Connected to Dilemma Baby server at: ${SERVER_URL} (ID: ${socket.id})`);
   socket.emit('register-hub');
   sendOscMessage('/baby/connected', 1);
+  restartBeatClock();
 });
 
 socket.on('connect_error', (err) => {
@@ -259,11 +280,12 @@ socket.on('disconnect', (reason) => {
 socket.on('game-state', (state) => {
   if (!state) return;
 
-  if (typeof state.happiness === 'number' && state.happiness !== currentHappiness) {
+  if (typeof state.happiness === 'number') {
     currentHappiness = state.happiness;
     sendOscMessage('/baby/happiness', currentHappiness);
     sendSerialCommand(`HAPPINESS:${currentHappiness}`);
     sendSerialCommand(`H:${currentHappiness}`);
+    restartBeatClock();
   }
 
   if (state.status) {
@@ -291,6 +313,7 @@ socket.on('happiness-update', (data) => {
   // Relay to Arduino via Serial
   sendSerialCommand(`HAPPINESS:${happiness}`);
   sendSerialCommand(`H:${happiness}`);
+  restartBeatClock();
 
   if (data.reason === 'reset') {
     sendSerialCommand('RESET');
@@ -313,6 +336,7 @@ socket.on('pulse', (data) => {
 // Clean shutdown handler
 function shutdown() {
   console.log('\n[HUB] Shutting down cleanly...');
+  if (beatInterval) clearInterval(beatInterval);
   if (autoScanInterval) clearInterval(autoScanInterval);
   if (oscClient) oscClient.close();
   if (serialPort && serialPort.isOpen) {
