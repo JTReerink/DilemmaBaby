@@ -7,7 +7,7 @@
 (function () {
   // --- DOM Elements ---
   const vitalScoreEl = document.getElementById('vital-score');
-  const btnExtendTime = document.getElementById('btn-extend-time');
+  const btnExtendTime = document.getElementById('extend-timer-btn') || document.getElementById('btn-extend-time');
 
   // Views
   const viewConnecting = document.getElementById('view-connecting');
@@ -74,6 +74,7 @@
   // --- Local State ---
   let mySlot = null;
   let isQueued = false;
+  let isPendingLateJoin = false;
   let myVote = null;
   let latestState = null;
   let settings = {};
@@ -134,17 +135,23 @@
   socket.on('init-state', (data) => {
     mySlot = data.slot;
     isQueued = !!data.isQueued;
+    isPendingLateJoin = !!data.pendingMidGame;
     settings = data.settings || {};
     if (lobbyRejoinBox) lobbyRejoinBox.style.display = 'none';
+    if (isPendingLateJoin) {
+      showMidGameModal(true);
+    }
     updateFromState(data.state);
   });
 
   socket.on('assigned-slot', (data) => {
     mySlot = data.slot;
     isQueued = false;
+    isPendingLateJoin = false;
     settings = data.settings || settings;
     if (lobbyRejoinBox) lobbyRejoinBox.style.display = 'none';
-    console.log('[SLOT] Promoted from queue! Assigned to Slot:', mySlot);
+    showMidGameModal(false);
+    console.log('[SLOT] Assigned to Slot:', mySlot);
   });
 
   // --- Host Force Lobby Reset (Kicks all players back to lobby screen) ---
@@ -152,6 +159,7 @@
     console.log('[RESET] Host reset the lobby. Clearing local slot state.');
     mySlot = null;
     isQueued = false;
+    isPendingLateJoin = false;
     myVote = null;
 
     hideInactivityModal();
@@ -179,9 +187,11 @@
     if (state.assignedSlot) {
       mySlot = state.assignedSlot;
       isQueued = false;
+      isPendingLateJoin = false;
     }
     if (state.isQueued) {
       isQueued = true;
+      isPendingLateJoin = false;
     }
 
     updateFromState(state);
@@ -194,6 +204,12 @@
     // 1. Update Happiness
     if (vitalScoreEl) {
       vitalScoreEl.textContent = `${state.happiness}/10`;
+    }
+
+    // 1B. If 3rd player is choosing whether to join mid-game, keep modal open and don't render empty dilemma
+    if (isPendingLateJoin && !mySlot && !isQueued) {
+      showMidGameModal(true);
+      return;
     }
 
     // 2. Queue View (Player 4+)
@@ -410,26 +426,31 @@
     });
   }
 
-  // --- Mid-Game Joining Handlers (3rd Player) ---
-  socket.on('mid-game-prompt', (data) => {
-    const dirTitle = data?.directiveTitle ? ` "${data.directiveTitle}"` : '';
+  // --- Late 3rd Player Joining Handlers ---
+  function handleOfferLateJoin() {
+    isPendingLateJoin = true;
     if (midGameDesc) {
-      midGameDesc.textContent = `A session is underway on Directive #${data?.directiveIndex || 1}${dirTitle} with 2 active players. Join now as Custodian 3, or wait in line for the next fresh session.`;
+      midGameDesc.textContent = 'Two players are already at the table.';
     }
     showMidGameModal(true);
-  });
+  }
+
+  socket.on('offer-late-join', handleOfferLateJoin);
+  socket.on('mid-game-prompt', handleOfferLateJoin);
 
   if (btnJoinCurrent) {
     btnJoinCurrent.addEventListener('click', () => {
+      isPendingLateJoin = false;
       showMidGameModal(false);
-      socket.emit('choose-mid-game', { choice: 'join' });
+      socket.emit('accept-late-join');
     });
   }
 
   if (btnWaitNext) {
     btnWaitNext.addEventListener('click', () => {
+      isPendingLateJoin = false;
       showMidGameModal(false);
-      socket.emit('choose-mid-game', { choice: 'wait' });
+      socket.emit('decline-late-join');
     });
   }
 
@@ -456,6 +477,20 @@
     showInactivityModal(data.seconds || 6);
   });
 
+  socket.on('inactivity-status', (data) => {
+    if (isQueued) return;
+    if (data && data.warning) {
+      const remainingSeconds = typeof data.remainingSeconds === 'number' ? data.remainingSeconds : 6;
+      if (modalInactivity && !modalInactivity.classList.contains('active')) {
+        showInactivityModal(remainingSeconds);
+      } else {
+        updateTimerVisuals(remainingSeconds);
+      }
+    } else {
+      hideInactivityModal();
+    }
+  });
+
   socket.on('inactivity-cleared', () => {
     hideInactivityModal();
   });
@@ -468,21 +503,22 @@
 
     if (inactivityInterval) clearInterval(inactivityInterval);
     inactivityInterval = setInterval(() => {
-      remaining--;
-      updateTimerVisuals(Math.max(0, remaining));
+      remaining = Math.max(0, remaining - 1);
+      updateTimerVisuals(remaining);
       if (remaining <= 0) {
         clearInterval(inactivityInterval);
+        inactivityInterval = null;
       }
     }, 1000);
   }
 
-  function updateTimerVisuals(sec) {
-    if (inactivityCountdown) inactivityCountdown.textContent = `${sec}s`;
-    if (btnImHere) btnImHere.textContent = `Yes, Keep Playing (${sec}s remaining)`;
-    if (btnExtendTime) {
-      btnExtendTime.textContent = `Extend Time (${sec}s)`;
-      btnExtendTime.style.borderColor = 'var(--distress-red)';
-      btnExtendTime.style.color = 'var(--distress-red)';
+  function updateTimerVisuals(remainingSeconds) {
+    if (inactivityCountdown) inactivityCountdown.textContent = `${remainingSeconds}s`;
+    if (btnImHere) btnImHere.textContent = `Yes, Keep Playing (${remainingSeconds}s remaining)`;
+    const extendBtn = document.getElementById('extend-timer-btn') || btnExtendTime;
+    if (extendBtn) {
+      extendBtn.innerText = `⏳ Extend Time (${remainingSeconds}s)`;
+      extendBtn.classList.add('warning-active');
     }
   }
 
@@ -492,10 +528,12 @@
       clearInterval(inactivityInterval);
       inactivityInterval = null;
     }
-    if (btnExtendTime) {
-      btnExtendTime.textContent = settings.extendTimeButton || 'Extend Time ⏱️';
-      btnExtendTime.style.borderColor = '';
-      btnExtendTime.style.color = '';
+    const extendBtn = document.getElementById('extend-timer-btn') || btnExtendTime;
+    if (extendBtn) {
+      extendBtn.innerText = "⏳ Extend Time";
+      extendBtn.classList.remove('warning-active');
+      extendBtn.style.borderColor = '';
+      extendBtn.style.color = '';
     }
     if (btnImHere) {
       btnImHere.textContent = 'Yes, I am here! (Keep Playing)';

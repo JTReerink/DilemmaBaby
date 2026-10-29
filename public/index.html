@@ -23,8 +23,8 @@
           <span>Vital State:</span>
           <span class="vital-score" id="vital-score">5/10</span>
         </div>
-        <button class="btn-extend-timer" id="btn-extend-time" title="Reset idle timer">
-          Extend Time ⏱️
+        <button class="btn-extend-timer" id="extend-timer-btn" title="Reset idle timer">
+          ⏳ Extend Time
         </button>
       </div>
     </header>
@@ -225,21 +225,21 @@
   </main>
 
   <!-- ================================================================= -->
-  <!-- MODAL: MID-GAME 3RD PLAYER PROMPT                                 -->
+  <!-- MODAL: LATE 3RD PLAYER JOIN PROMPT                                -->
   <!-- ================================================================= -->
   <div class="modal-overlay" id="modal-mid-game">
-    <div class="modal-card" style="max-width: 360px;">
+    <div class="modal-card modal-late-join-card">
       <div class="modal-icon">⚡</div>
-      <h3 class="modal-title" style="color: var(--accent-cyan);">Session In Progress</h3>
+      <h3 class="modal-title" style="color: var(--accent-cyan);">A game is currently in progress!</h3>
       <p class="modal-text" id="mid-game-desc">
-        A session is currently underway. You can join right now as Custodian 3, or wait in line for the next fresh session.
+        Two players are already at the table.
       </p>
-      <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 8px;">
-        <button class="btn-main" id="btn-join-current" style="background: linear-gradient(135deg, var(--happy-green), #059669); font-size: 0.95rem; padding: 14px;">
-          ✓ Join Current Game
+      <div class="late-join-actions">
+        <button class="btn-late-join btn-late-join-accept" id="btn-join-current">
+          Join Current Session
         </button>
-        <button class="choice-btn" id="btn-wait-next" style="text-align: center; justify-content: center; padding: 13px; width: 100%;">
-          <span style="font-weight: 600;">⏳ Wait for Next Game</span>
+        <button class="btn-late-join btn-late-join-wait" id="btn-wait-next">
+          Wait for Next Session
         </button>
       </div>
     </div>

@@ -83,6 +83,7 @@ const gameState = {
 // --- Timers ---
 let inactivityTimer = null;
 let inactivityWarningTimer = null;
+let inactivityTickInterval = null;
 let autoAdvanceTimer = null;
 
 // --- Express Middleware & Static Files ---
@@ -452,23 +453,39 @@ function resetInactivityTimer() {
   }, 30000);
 }
 
+function emitToActivePlayers(event, payload) {
+  for (const [, socketId] of Object.entries(gameState.players)) {
+    if (socketId) {
+      const s = io.sockets.sockets.get(socketId);
+      if (s) {
+        s.emit(event, payload);
+      }
+    }
+  }
+}
+
 function triggerInactivityWarning() {
   if (gameState.status !== 'active') return;
 
   gameState.inactivityWarning = true;
+  let remainingSeconds = 6;
   console.log('[INACTIVITY] 30s elapsed without input. Triggering 6s modal countdown...');
 
   // Emit warning ONLY to active game players (Slots 1, 2, 3), NOT to waiting queue
-  for (const [slot, socketId] of Object.entries(gameState.players)) {
-    if (socketId) {
-      const s = io.sockets.sockets.get(socketId);
-      if (s) {
-        s.emit('inactivity-warning', { seconds: 6 });
-      }
-    }
-  }
+  emitToActivePlayers('inactivity-warning', { seconds: remainingSeconds });
+  emitToActivePlayers('inactivity-status', { warning: true, remainingSeconds });
 
   broadcastGameState();
+
+  if (inactivityTickInterval) clearInterval(inactivityTickInterval);
+  inactivityTickInterval = setInterval(() => {
+    remainingSeconds = Math.max(0, remainingSeconds - 1);
+    emitToActivePlayers('inactivity-status', { warning: true, remainingSeconds });
+    if (remainingSeconds <= 0) {
+      clearInterval(inactivityTickInterval);
+      inactivityTickInterval = null;
+    }
+  }, 1000);
 
   inactivityWarningTimer = setTimeout(() => {
     handleInactivitySessionEnded();
@@ -487,14 +504,7 @@ function handleInactivitySessionEnded() {
   gameState.inactivityWarning = false;
 
   // Inform active players with the confirmation screen
-  for (const [slot, socketId] of Object.entries(gameState.players)) {
-    if (socketId) {
-      const s = io.sockets.sockets.get(socketId);
-      if (s) {
-        s.emit('session-inactivity-ended');
-      }
-    }
-  }
+  emitToActivePlayers('session-inactivity-ended');
 
   io.emit('happiness-update', {
     happiness: 5,
@@ -508,10 +518,10 @@ function handleInactivitySessionEnded() {
 function extendTime() {
   console.log('[INACTIVITY] Player requested time extension. Resetting 30s timer.');
   gameState.inactivityWarning = false;
-  clearTimeout(inactivityWarningTimer);
-  inactivityWarningTimer = null;
+  clearInactivityTimer();
 
   io.emit('inactivity-cleared');
+  io.emit('inactivity-status', { warning: false, remainingSeconds: 0 });
   resetInactivityTimer();
   broadcastGameState();
 }
@@ -524,6 +534,10 @@ function clearInactivityTimer() {
   if (inactivityWarningTimer) {
     clearTimeout(inactivityWarningTimer);
     inactivityWarningTimer = null;
+  }
+  if (inactivityTickInterval) {
+    clearInterval(inactivityTickInterval);
+    inactivityTickInterval = null;
   }
   gameState.inactivityWarning = false;
 }
@@ -607,26 +621,27 @@ io.on('connection', (socket) => {
       state: getSanitizedGameState()
     });
 
-    // If mid-game 3rd player join detected, send prompt
+    // If mid-game 3rd player join detected (active game with 2 players), offer late join
     if (assignment.pendingMidGame) {
       const currentDilemma = dilemmas[gameState.currentDilemmaIndex];
-      socket.emit('mid-game-prompt', {
+      const payload = {
         availableSlot: assignment.vacantSlot,
         directiveTitle: currentDilemma ? currentDilemma.title : 'Active Directive',
         directiveIndex: gameState.currentDilemmaIndex + 1
-      });
+      };
+      socket.emit('offer-late-join', payload);
+      socket.emit('mid-game-prompt', payload);
     }
 
     broadcastGameState();
   });
 
-  // Mid-Game Joining Decision (3rd Player)
-  socket.on('choose-mid-game', (data) => {
+  function handleLateJoinChoice(choice) {
     if (socket.isHub || socket.isHost) return;
-    const vacantSlot = gameState.pendingMidGame[socket.id];
+    const vacantSlot = gameState.pendingMidGame[socket.id] || ['1', '2', '3'].find(s => gameState.players[s] === null);
     delete gameState.pendingMidGame[socket.id];
 
-    if (data?.choice === 'join') {
+    if (choice === 'join') {
       if (vacantSlot && gameState.players[vacantSlot] === null && (gameState.status === 'active' || gameState.status === 'revealed')) {
         gameState.players[vacantSlot] = socket.id;
         console.log(`[MID-GAME] Socket ${socket.id} joined active game as Slot ${vacantSlot}`);
@@ -634,16 +649,25 @@ io.on('connection', (socket) => {
         broadcastGameState();
       } else {
         // Slot is no longer open or game ended, fallback to queue
-        gameState.queue.push(socket.id);
+        if (!gameState.queue.includes(socket.id)) {
+          gameState.queue.push(socket.id);
+        }
         broadcastGameState();
       }
     } else {
       // Chose to wait for next game
-      console.log(`[MID-GAME] Socket ${socket.id} opted to wait for next game.`);
-      gameState.queue.push(socket.id);
+      console.log(`[MID-GAME] Socket ${socket.id} opted to wait for next session.`);
+      if (!gameState.queue.includes(socket.id)) {
+        gameState.queue.push(socket.id);
+      }
       broadcastGameState();
     }
-  });
+  }
+
+  // Late 3rd Player Joining Decisions
+  socket.on('accept-late-join', () => handleLateJoinChoice('join'));
+  socket.on('decline-late-join', () => handleLateJoinChoice('wait'));
+  socket.on('choose-mid-game', (data) => handleLateJoinChoice(data?.choice === 'join' ? 'join' : 'wait'));
 
   // Return to Lobby after Inactivity Stop
   socket.on('return-to-lobby', () => {

@@ -75,6 +75,8 @@ body {
   padding-bottom: 16px;
   margin-bottom: 16px;
   border-bottom: 1px solid var(--border-subtle);
+  position: relative;
+  z-index: 10000;
 }
 
 .brand-badge {
@@ -574,17 +576,21 @@ body {
   transition: width 0.1s linear;
 }
 
-/* Inactivity Modal Overlay */
+/* Inactivity & Late-Join Modal Overlays */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(8px);
   display: none;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  z-index: 999;
+  z-index: 9999;
+}
+
+#modal-mid-game {
+  z-index: 10001;
 }
 
 .modal-overlay.active {
@@ -609,6 +615,60 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.modal-late-join-card {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 40px rgba(0, 210, 255, 0.35);
+}
+
+.late-join-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn-late-join {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-late-join:active {
+  transform: scale(0.98);
+}
+
+.btn-late-join-accept {
+  background: var(--happy-green);
+  color: #03150e;
+  border: 2px solid #34d399;
+  box-shadow: 0 6px 22px var(--happy-glow);
+}
+
+.btn-late-join-wait {
+  background: #1e293b;
+  color: #ffffff;
+  border: 2px solid var(--accent-cyan);
+  box-shadow: 0 4px 16px rgba(0, 210, 255, 0.2);
+}
+
+.btn-extend-timer.warning-active {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--distress-red);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 0 14px var(--distress-glow);
 }
 
 .modal-icon {
