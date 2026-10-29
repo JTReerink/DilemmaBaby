@@ -12,14 +12,24 @@
   // Views
   const viewConnecting = document.getElementById('view-connecting');
   const viewQueue = document.getElementById('view-queue');
+  const viewMidGamePrompt = document.getElementById('view-mid-game-prompt');
   const viewLobby = document.getElementById('view-lobby');
   const viewDilemma = document.getElementById('view-dilemma');
   const viewReveal = document.getElementById('view-reveal');
   const viewCompleted = document.getElementById('view-completed');
+  const viewInactivityEnded = document.getElementById('view-inactivity-ended');
 
   // Queue Elements
   const queuePositionEl = document.getElementById('queue-position');
   const queueMessageEl = document.getElementById('queue-message');
+
+  // Mid-Game Prompt Elements
+  const midGameDesc = document.getElementById('mid-game-desc');
+  const btnJoinCurrent = document.getElementById('btn-join-current');
+  const btnWaitNext = document.getElementById('btn-wait-next');
+
+  // Session Ended Elements
+  const btnReturnLobby = document.getElementById('btn-return-lobby');
 
   // Lobby Elements
   const lobbySlotBadge = document.getElementById('lobby-slot-badge');
@@ -28,7 +38,6 @@
   const slotInd2 = document.getElementById('slot-ind-2');
   const slotInd3 = document.getElementById('slot-ind-3');
   const lobbyActionBox = document.getElementById('lobby-action-box');
-  const lobbyCountdownText = document.getElementById('lobby-countdown-text');
   const btnStartNow = document.getElementById('btn-start-now');
 
   // Dilemma Elements
@@ -81,7 +90,16 @@
 
   // Helper: Switch Active View
   function showView(target) {
-    [viewConnecting, viewQueue, viewLobby, viewDilemma, viewReveal, viewCompleted].forEach(el => {
+    [
+      viewConnecting,
+      viewQueue,
+      viewMidGamePrompt,
+      viewLobby,
+      viewDilemma,
+      viewReveal,
+      viewCompleted,
+      viewInactivityEnded
+    ].forEach(el => {
       if (el) el.classList.remove('active');
     });
     if (target) target.classList.add('active');
@@ -153,6 +171,13 @@
       return;
     }
 
+    // 2B. Inactivity Ended View
+    if (state.status === 'inactivity-ended') {
+      hideInactivityModal();
+      showView(viewInactivityEnded);
+      return;
+    }
+
     // 3. Lobby View (Status: lobby or ready)
     if (state.status === 'lobby' || state.status === 'ready') {
       showView(viewLobby);
@@ -169,14 +194,14 @@
 
       if (lobbyStatusMsg) {
         if (state.status === 'ready') {
-          lobbyStatusMsg.textContent = settings.lobbyReady || 'Session is ready to begin!';
+          lobbyStatusMsg.textContent = settings.lobbyReady || 'Session is ready to begin! Click Start Game to start.';
         } else {
           const templ = settings.lobbyWaiting || 'Waiting for co-custodians ({count}/3 connected)...';
           lobbyStatusMsg.textContent = templ.replace('{count}', count);
         }
       }
 
-      // Show Start Button if ready
+      // Show Start Button if ready (>= 2 players connected)
       if (lobbyActionBox) {
         lobbyActionBox.style.display = (state.status === 'ready') ? 'block' : 'none';
       }
@@ -334,20 +359,51 @@
   btnChoiceA.addEventListener('click', () => submitChoice('A'));
   btnChoiceB.addEventListener('click', () => submitChoice('B'));
 
-  // --- Lobby Immediate Start ---
-  btnStartNow.addEventListener('click', () => {
-    socket.emit('player-start');
-  });
+  // --- Lobby Manual Start ---
+  if (btnStartNow) {
+    btnStartNow.addEventListener('click', () => {
+      socket.emit('player-start');
+    });
+  }
 
-  socket.on('lobby-countdown', (data) => {
-    if (lobbyCountdownText) {
-      const templ = settings.lobbyAutoStart || 'Starting session in {seconds}s...';
-      lobbyCountdownText.textContent = templ.replace('{seconds}', data.seconds);
+  // --- Mid-Game Joining Handlers (3rd Player) ---
+  socket.on('mid-game-prompt', (data) => {
+    showView(viewMidGamePrompt);
+    if (midGameDesc) {
+      const dirTitle = data?.directiveTitle ? ` ("${data.directiveTitle}")` : '';
+      midGameDesc.textContent = `A session is currently underway with 2 players on Directive #${data?.directiveIndex || 1}${dirTitle}. You can join right now as Custodian 3, or wait in line for the next fresh session.`;
     }
   });
 
+  if (btnJoinCurrent) {
+    btnJoinCurrent.addEventListener('click', () => {
+      socket.emit('choose-mid-game', { choice: 'join' });
+    });
+  }
+
+  if (btnWaitNext) {
+    btnWaitNext.addEventListener('click', () => {
+      socket.emit('choose-mid-game', { choice: 'wait' });
+    });
+  }
+
+  // --- Return to Lobby from Session Ended Screen ---
+  if (btnReturnLobby) {
+    btnReturnLobby.addEventListener('click', () => {
+      socket.emit('return-to-lobby');
+      showView(viewLobby);
+    });
+  }
+
+  socket.on('session-inactivity-ended', () => {
+    hideInactivityModal();
+    showView(viewInactivityEnded);
+  });
+
   // --- Inactivity Timeout (30s Idle + 6s Warning) ---
+  // Waiting room / queued players NEVER receive or show inactivity warnings
   socket.on('inactivity-warning', (data) => {
+    if (isQueued) return;
     showInactivityModal(data.seconds || 6);
   });
 
@@ -359,16 +415,26 @@
     if (modalInactivity) modalInactivity.classList.add('active');
 
     let remaining = seconds;
-    if (inactivityCountdown) inactivityCountdown.textContent = `${remaining}s`;
+    updateTimerVisuals(remaining);
 
     if (inactivityInterval) clearInterval(inactivityInterval);
     inactivityInterval = setInterval(() => {
       remaining--;
-      if (inactivityCountdown) inactivityCountdown.textContent = `${Math.max(0, remaining)}s`;
+      updateTimerVisuals(Math.max(0, remaining));
       if (remaining <= 0) {
         clearInterval(inactivityInterval);
       }
     }, 1000);
+  }
+
+  function updateTimerVisuals(sec) {
+    if (inactivityCountdown) inactivityCountdown.textContent = `${sec}s`;
+    if (btnImHere) btnImHere.textContent = `Yes, Keep Playing (${sec}s remaining)`;
+    if (btnExtendTime) {
+      btnExtendTime.textContent = `⏱️ Extend (${sec}s)`;
+      btnExtendTime.style.borderColor = 'var(--distress-red)';
+      btnExtendTime.style.color = 'var(--distress-red)';
+    }
   }
 
   function hideInactivityModal() {
@@ -376,6 +442,14 @@
     if (inactivityInterval) {
       clearInterval(inactivityInterval);
       inactivityInterval = null;
+    }
+    if (btnExtendTime) {
+      btnExtendTime.textContent = '⏱️ Extend';
+      btnExtendTime.style.borderColor = '';
+      btnExtendTime.style.color = '';
+    }
+    if (btnImHere) {
+      btnImHere.textContent = 'Yes, I am here! (Keep Playing)';
     }
   }
 
@@ -392,12 +466,14 @@
     btnExtendTime.style.borderColor = 'var(--happy-green)';
     btnExtendTime.style.color = 'var(--happy-green)';
     setTimeout(() => {
-      btnExtendTime.style.borderColor = '';
-      btnExtendTime.style.color = '';
+      if (!modalInactivity.classList.contains('active')) {
+        btnExtendTime.style.borderColor = '';
+        btnExtendTime.style.color = '';
+      }
     }, 1000);
   });
 
-  // Happiness event listener for audio/haptics
+  // Happiness event listener for vital HUD
   socket.on('happiness-update', (data) => {
     if (vitalScoreEl) vitalScoreEl.textContent = `${data.happiness}/10`;
   });

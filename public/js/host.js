@@ -30,6 +30,8 @@
 
   const hostGameStatus = document.getElementById('host-game-status');
   const queueBadgeCount = document.getElementById('queue-badge-count');
+  const hostQueueList = document.getElementById('host-queue-list');
+  const hostQueueEmpty = document.getElementById('host-queue-empty');
   const hostMatrixStatus = document.getElementById('host-matrix-status');
 
   const hostVote1 = document.getElementById('host-vote-1');
@@ -169,6 +171,9 @@
       queueBadgeCount.textContent = `${state.queueCount || 0} in line`;
     }
 
+    // Render interactive waiting room queue list
+    renderHostQueue(state.queueDetails || [], state.players || {});
+
     // Active Custodians
     const players = state.players || {};
     const votes = state.votes || {};
@@ -182,7 +187,7 @@
       if (state.status === 'lobby') {
         hostMatrixStatus.textContent = `${state.activePlayersCount || 0} of 3 players connected in lobby.`;
       } else if (state.status === 'ready') {
-        hostMatrixStatus.textContent = 'Lobby ready! Auto-starting session...';
+        hostMatrixStatus.textContent = 'Lobby ready! Waiting for any player to click Start Game.';
       } else if (state.status === 'active') {
         const vCount = Object.values(votes).filter(Boolean).length;
         hostMatrixStatus.textContent = `Voting active. ${vCount}/${state.activePlayersCount} votes submitted.`;
@@ -212,6 +217,68 @@
     const choiceB = choices.find(c => c.id === 'B') || { text: '-' };
     if (inspectorOptA) inspectorOptA.textContent = choiceA.text;
     if (inspectorOptB) inspectorOptB.textContent = choiceB.text;
+  }
+
+  function renderHostQueue(queueDetails, players) {
+    if (!hostQueueList || !hostQueueEmpty) return;
+
+    if (!queueDetails || queueDetails.length === 0) {
+      hostQueueList.innerHTML = '';
+      hostQueueEmpty.style.display = 'block';
+      return;
+    }
+
+    hostQueueEmpty.style.display = 'none';
+    hostQueueList.innerHTML = '';
+
+    // Check if any slot is currently open (null)
+    const openSlot = ['1', '2', '3'].find(slot => players[slot] === null);
+
+    queueDetails.forEach((item, idx) => {
+      const row = document.createElement('div');
+      row.className = 'host-queue-item';
+
+      const isFirst = (idx === 0);
+      const isLast = (idx === queueDetails.length - 1);
+
+      row.innerHTML = `
+        <div class="host-queue-info">
+          <span class="host-queue-pos">#${item.position}</span>
+          <span>Client ...${item.shortId}</span>
+        </div>
+        <div class="host-queue-actions">
+          <button class="btn-queue-order" data-dir="up" ${isFirst ? 'disabled' : ''} title="Move up in queue">▲</button>
+          <button class="btn-queue-order" data-dir="down" ${isLast ? 'disabled' : ''} title="Move down in queue">▼</button>
+          <button class="btn-queue-promote" ${openSlot ? '' : 'disabled'} title="${openSlot ? `Promote directly to Slot ${openSlot}` : 'All slots are full'}">
+            ${openSlot ? `Promote (Slot ${openSlot})` : 'Slots Full'}
+          </button>
+        </div>
+      `;
+
+      const upBtn = row.querySelector('.btn-queue-order[data-dir="up"]');
+      const downBtn = row.querySelector('.btn-queue-order[data-dir="down"]');
+      const promoteBtn = row.querySelector('.btn-queue-promote');
+
+      if (upBtn) {
+        upBtn.addEventListener('click', () => {
+          socket.emit('host:reorder-queue', { socketId: item.id, direction: 'up' });
+        });
+      }
+
+      if (downBtn) {
+        downBtn.addEventListener('click', () => {
+          socket.emit('host:reorder-queue', { socketId: item.id, direction: 'down' });
+        });
+      }
+
+      if (promoteBtn && openSlot) {
+        promoteBtn.addEventListener('click', () => {
+          socket.emit('host:promote-player', { socketId: item.id, slot: openSlot });
+        });
+      }
+
+      hostQueueList.appendChild(row);
+    });
   }
 
   function updateSlotUI(el, socketId, vote, name) {

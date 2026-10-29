@@ -71,20 +71,19 @@ loadData();
 const gameState = {
   happiness: 5,               // 0 to 10
   currentDilemmaIndex: 0,
-  status: 'lobby',            // 'lobby' | 'ready' | 'active' | 'revealed' | 'completed'
+  status: 'lobby',            // 'lobby' | 'ready' | 'active' | 'revealed' | 'completed' | 'inactivity-ended'
   players: { '1': null, '2': null, '3': null }, // slot -> socket.id
   queue: [],                  // [socket.id, ...]
   votes: { '1': null, '2': null, '3': null },
   result: null,               // { consensus: boolean, unanimousChoice: 'A'|'B', votes, message }
-  inactivityWarning: false
+  inactivityWarning: false,
+  pendingMidGame: {}          // socket.id -> vacantSlot
 };
 
 // --- Timers ---
 let inactivityTimer = null;
 let inactivityWarningTimer = null;
 let autoAdvanceTimer = null;
-let lobbyCountdownTimer = null;
-let lobbyCountdownSeconds = 5;
 
 // --- Express Middleware & Static Files ---
 app.use(express.json());
@@ -166,11 +165,18 @@ function broadcastGameState() {
     }
   });
 
-  // Send full state to host dashboard
+  // Send full state to host dashboard with detailed queue information
+  const queueDetails = gameState.queue.map((socketId, idx) => ({
+    id: socketId,
+    shortId: socketId ? socketId.substring(0, 6) : 'Unknown',
+    position: idx + 1
+  }));
+
   io.emit('host:state', {
     ...baseState,
     players: gameState.players,
     queueCount: gameState.queue.length,
+    queueDetails,
     votes: gameState.votes,
     dilemmasCount: dilemmas.length,
     settings
@@ -201,6 +207,7 @@ function getCurrentPerspective(slot) {
 }
 
 // --- Slot Assignment & Queue Management ---
+// --- Slot Assignment & Queue Management ---
 function assignSlotOrQueue(socket) {
   // Check if player is already assigned
   for (const [slot, id] of Object.entries(gameState.players)) {
@@ -218,7 +225,15 @@ function assignSlotOrQueue(socket) {
   // Check for vacant slot (1, 2, or 3)
   const vacantSlot = ['1', '2', '3'].find(slot => gameState.players[slot] === null);
 
-  // If slot available and no one waiting in queue
+  // If game is actively in progress with a vacant slot and empty queue:
+  // Present 3rd player with mid-game prompt (Join Current Game vs Wait for Next Game)
+  if ((gameState.status === 'active' || gameState.status === 'revealed') && vacantSlot && gameState.queue.length === 0) {
+    gameState.pendingMidGame[socket.id] = vacantSlot;
+    console.log(`[MID-GAME] Socket ${socket.id} presented mid-game choice for Slot ${vacantSlot}`);
+    return { slot: null, isQueued: false, pendingMidGame: true, vacantSlot };
+  }
+
+  // If slot available in lobby and no one waiting in queue
   if (vacantSlot && gameState.queue.length === 0) {
     gameState.players[vacantSlot] = socket.id;
     console.log(`[SLOT] Socket ${socket.id} assigned to Slot ${vacantSlot}`);
@@ -234,6 +249,11 @@ function assignSlotOrQueue(socket) {
 }
 
 function removeSocket(socketId) {
+  // Clean up any pending mid-game prompt
+  if (gameState.pendingMidGame[socketId]) {
+    delete gameState.pendingMidGame[socketId];
+  }
+
   // Remove from active slots
   for (const [slot, id] of Object.entries(gameState.players)) {
     if (id === socketId) {
@@ -271,19 +291,17 @@ function promoteFromQueue(slot) {
   }
 }
 
-// --- Autonomous Session Lifecycle ---
+// --- Session Lifecycle (Manual Start) ---
 function checkLobbyReadiness() {
   const activeCount = Object.values(gameState.players).filter(Boolean).length;
 
   if (gameState.status === 'lobby' || gameState.status === 'ready') {
     if (activeCount >= 2) {
-      // 2 or 3 players connected: lobby is ready to start!
+      // 2 or 3 players connected: lobby is ready for manual start!
       gameState.status = 'ready';
-      startLobbyCountdown();
     } else {
-      // Not enough players, reset to waiting
+      // Not enough players, return to waiting
       gameState.status = 'lobby';
-      cancelLobbyCountdown();
     }
   } else if (gameState.status === 'active') {
     // If during an active game all players leave
@@ -293,34 +311,7 @@ function checkLobbyReadiness() {
   }
 }
 
-function startLobbyCountdown() {
-  if (lobbyCountdownTimer) return; // Already running
-
-  lobbyCountdownSeconds = 5;
-  console.log('[LOBBY] 2 or 3 players present. Auto-starting session in 5s...');
-
-  io.emit('lobby-countdown', { seconds: lobbyCountdownSeconds });
-
-  lobbyCountdownTimer = setInterval(() => {
-    lobbyCountdownSeconds--;
-    io.emit('lobby-countdown', { seconds: lobbyCountdownSeconds });
-
-    if (lobbyCountdownSeconds <= 0) {
-      cancelLobbyCountdown();
-      startSession();
-    }
-  }, 1000);
-}
-
-function cancelLobbyCountdown() {
-  if (lobbyCountdownTimer) {
-    clearInterval(lobbyCountdownTimer);
-    lobbyCountdownTimer = null;
-  }
-}
-
 function startSession() {
-  cancelLobbyCountdown();
   clearAllTimers();
 
   gameState.status = 'active';
@@ -443,13 +434,51 @@ function triggerInactivityWarning() {
   gameState.inactivityWarning = true;
   console.log('[INACTIVITY] 30s elapsed without input. Triggering 6s modal countdown...');
 
-  io.emit('inactivity-warning', { seconds: 6 });
+  // Emit warning ONLY to active game players (Slots 1, 2, 3), NOT to waiting queue
+  for (const [slot, socketId] of Object.entries(gameState.players)) {
+    if (socketId) {
+      const s = io.sockets.sockets.get(socketId);
+      if (s) {
+        s.emit('inactivity-warning', { seconds: 6 });
+      }
+    }
+  }
+
   broadcastGameState();
 
   inactivityWarningTimer = setTimeout(() => {
-    console.log('[INACTIVITY] 6s warning elapsed without response. Resetting session...');
-    resetSession(false);
+    handleInactivitySessionEnded();
   }, 6000);
+}
+
+function handleInactivitySessionEnded() {
+  console.log('[INACTIVITY] 6s warning elapsed without response. Session ended due to inactivity.');
+  clearAllTimers();
+
+  gameState.happiness = 5;
+  gameState.currentDilemmaIndex = 0;
+  gameState.votes = { '1': null, '2': null, '3': null };
+  gameState.status = 'inactivity-ended';
+  gameState.result = null;
+  gameState.inactivityWarning = false;
+
+  // Inform active players with the confirmation screen
+  for (const [slot, socketId] of Object.entries(gameState.players)) {
+    if (socketId) {
+      const s = io.sockets.sockets.get(socketId);
+      if (s) {
+        s.emit('session-inactivity-ended');
+      }
+    }
+  }
+
+  io.emit('happiness-update', {
+    happiness: 5,
+    change: 0,
+    reason: 'inactivity-reset'
+  });
+
+  broadcastGameState();
 }
 
 function extendTime() {
@@ -477,7 +506,6 @@ function clearInactivityTimer() {
 
 function clearAllTimers() {
   clearInactivityTimer();
-  cancelLobbyCountdown();
   if (autoAdvanceTimer) {
     clearTimeout(autoAdvanceTimer);
     autoAdvanceTimer = null;
@@ -532,7 +560,51 @@ io.on('connection', (socket) => {
     state: getSanitizedGameState()
   });
 
+  // If mid-game 3rd player join detected, send prompt
+  if (assignment.pendingMidGame) {
+    const currentDilemma = dilemmas[gameState.currentDilemmaIndex];
+    socket.emit('mid-game-prompt', {
+      availableSlot: assignment.vacantSlot,
+      directiveTitle: currentDilemma ? currentDilemma.title : 'Active Directive',
+      directiveIndex: gameState.currentDilemmaIndex + 1
+    });
+  }
+
   broadcastGameState();
+
+  // Mid-Game Joining Decision (3rd Player)
+  socket.on('choose-mid-game', (data) => {
+    const vacantSlot = gameState.pendingMidGame[socket.id];
+    delete gameState.pendingMidGame[socket.id];
+
+    if (data?.choice === 'join') {
+      if (vacantSlot && gameState.players[vacantSlot] === null && (gameState.status === 'active' || gameState.status === 'revealed')) {
+        gameState.players[vacantSlot] = socket.id;
+        console.log(`[MID-GAME] Socket ${socket.id} joined active game as Slot ${vacantSlot}`);
+        socket.emit('assigned-slot', { slot: vacantSlot, settings });
+        broadcastGameState();
+      } else {
+        // Slot is no longer open or game ended, fallback to queue
+        gameState.queue.push(socket.id);
+        broadcastGameState();
+      }
+    } else {
+      // Chose to wait for next game
+      console.log(`[MID-GAME] Socket ${socket.id} opted to wait for next game.`);
+      gameState.queue.push(socket.id);
+      broadcastGameState();
+    }
+  });
+
+  // Return to Lobby after Inactivity Stop
+  socket.on('return-to-lobby', () => {
+    if (gameState.status === 'inactivity-ended') {
+      console.log(`[LOBBY] Socket ${socket.id} returned to lobby after inactivity termination.`);
+      gameState.status = 'lobby';
+      checkLobbyReadiness();
+      broadcastGameState();
+    }
+  });
 
   // Player Cast Vote
   socket.on('cast-vote', (data) => {
@@ -550,11 +622,11 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Player Manual Start (skip 5s lobby countdown)
+  // Player Manual Start (Starts game when >= 2 players in lobby)
   socket.on('player-start', () => {
     const activeCount = Object.values(gameState.players).filter(Boolean).length;
     if (activeCount >= 2 && (gameState.status === 'lobby' || gameState.status === 'ready')) {
-      console.log(`[START] Player ${socket.id} triggered immediate start.`);
+      console.log(`[START] Player ${socket.id} manually started game.`);
       startSession();
     }
   });
@@ -562,6 +634,49 @@ io.on('connection', (socket) => {
   // Player Extend Time
   socket.on('extend-time', () => {
     extendTime();
+  });
+
+  // Host Queue Reordering & Promotion
+  socket.on('host:reorder-queue', (data) => {
+    const { socketId, direction } = data || {};
+    const idx = gameState.queue.indexOf(socketId);
+    if (idx !== -1) {
+      if (direction === 'up' && idx > 0) {
+        const temp = gameState.queue[idx - 1];
+        gameState.queue[idx - 1] = gameState.queue[idx];
+        gameState.queue[idx] = temp;
+      } else if (direction === 'down' && idx < gameState.queue.length - 1) {
+        const temp = gameState.queue[idx + 1];
+        gameState.queue[idx + 1] = gameState.queue[idx];
+        gameState.queue[idx] = temp;
+      }
+      console.log(`[QUEUE] Reordered socket ${socketId} ${direction}`);
+      broadcastGameState();
+    }
+  });
+
+  socket.on('host:promote-player', (data) => {
+    const { socketId, slot } = data || {};
+    const qIdx = gameState.queue.indexOf(socketId);
+    if (qIdx === -1) return;
+
+    let targetSlot = slot;
+    if (!targetSlot || gameState.players[targetSlot] !== null) {
+      targetSlot = ['1', '2', '3'].find(s => gameState.players[s] === null);
+    }
+
+    if (targetSlot) {
+      gameState.queue.splice(qIdx, 1);
+      gameState.players[targetSlot] = socketId;
+      console.log(`[HOST] Manually promoted socket ${socketId} from queue to Slot ${targetSlot}`);
+
+      const s = io.sockets.sockets.get(socketId);
+      if (s) {
+        s.emit('assigned-slot', { slot: targetSlot, settings });
+      }
+      checkLobbyReadiness();
+      broadcastGameState();
+    }
   });
 
   // Host Actions

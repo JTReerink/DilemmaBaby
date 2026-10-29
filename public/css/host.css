@@ -547,9 +547,74 @@
   animation: toast-in 0.3s ease-out;
 }
 
-@keyframes toast-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Host Queue Management */
+.host-queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.host-queue-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.host-queue-pos {
+  background: var(--bg-surface-elevated);
+  color: var(--accent-cyan);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  border: 1px solid rgba(0, 210, 255, 0.2);
+}
+
+.host-queue-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-queue-order {
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-queue-order:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-queue-promote {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-queue-promote:disabled {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 @media (max-width: 1100px) {

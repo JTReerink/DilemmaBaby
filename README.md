@@ -92,18 +92,24 @@ The server is optimized for Render's free tier with automated cold-start handlin
 
 - **Language**: Strictly **100% English** for international festival visitors.
 - **Single QR Code Join**: All participants scan the identical QR code. Slots 1, 2, and 3 are assigned in order of connection.
+- **Manual Game Start in Lobby**:
+  - The game does **not** auto-start upon 2 players joining.
+  - When 2 or 3 players are in the lobby, a prominent **"▶ Start Game"** button appears. Any connected player can click it to commence the session.
+- **Late 3rd Player Mid-Game Joining**:
+  - If a session is started with 2 players and a 3rd participant joins mid-game, they receive a prompt:
+    - **Option 1**: *"Join Current Game"* (Assigns them Slot 3 and brings them immediately to the active directive).
+    - **Option 2**: *"Wait for Next Game"* (Places them in the waiting queue to start from Directive 01).
 - **Waiting Room Queue**: If a 4th or subsequent participant connects while a session is active, they see a clean waiting screen:
   `"Queue position: #1. Waiting for current session to finish..."`
-  When an active player leaves or the session resets, queued participants are automatically promoted to active slots.
-- **Autonomous Self-Start**: Once 2 or 3 players enter the lobby, a 5-second countdown begins automatically. Players can also tap "Start Session Immediately".
+  When an active player leaves or the session resets, queued visitors are automatically promoted to active slots.
 - **Tactile Dilemma Voting**:
   - Displays the case title, choices (Option A & Option B), and the player's secret perspective.
   - Buttons provide tactile vibration feedback on supported smartphones.
   - Upon selecting an option, the vote is locked in with a pending confirmation message.
-- **Inactivity Protection (30s Idle + 6s Warning)**:
-  - If no vote is submitted for 30 seconds, an alert modal appears: *"Are you still there? Session resets in 6 seconds..."*
-  - A persistent **"Extend Time ⏱️"** button in the header allows visitors to grant extra debate time without losing their spot.
-  - Tapping "Yes, Still Here" clears the modal and resets the 30-second timer.
+- **Inactivity Protection & Stopped Screen**:
+  - **No Timeout for Waiting Room**: Participants waiting in line never receive idle warnings.
+  - **Live Countdown on Extend Button**: When 30 seconds of inactivity elapse, a 6-second modal pops up and the header button counts down in real time: *"⏱️ Extend (6s)"* -> *(5s)*...
+  - **Session Ended Confirmation Screen**: If 6 seconds expire without response, the active players see a dedicated screen: *"Session Ended due to inactivity. The game has stopped."* with a **"Return to Lobby"** button.
 
 ---
 
@@ -111,8 +117,12 @@ The server is optimized for Render's free tier with automated cold-start handlin
 
 The Host Dashboard provides comprehensive monitoring and customization:
 
-### Tab 1: Live Facilitation
+### Tab 1: Live Facilitation & Queue Management
 - **Live Biometric Status**: Real-time display of happiness level (0–10), active slot assignments, and live queue count.
+- **Interactive Waiting Queue Manager**:
+  - Renders live list of all queued participants.
+  - **Reorder Priority**: Use `▲` (Move Up) or `▼` (Move Down) to reorder participant queue priority.
+  - **Direct Slot Promotion**: Click **"Promote (Slot X)"** to immediately admit a waiting participant into any open slot.
 - **Vote Matrix**: Real-time inspection of who has voted for Option A or B.
 - **Facilitator Controls**:
   - `Adjust Happiness`: Manual `+1` / `-1` or direct slider override.

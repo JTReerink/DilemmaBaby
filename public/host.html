@@ -99,14 +99,24 @@
           </div>
         </section>
 
-        <!-- Waiting Room Queue Stats -->
+        <!-- Waiting Room Queue Management -->
         <section class="panel-card">
           <div class="panel-title">
             <span>Waiting Room Queue</span>
             <span class="badge" id="queue-badge-count">0 in line</span>
           </div>
-          <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
-            4th and subsequent mobile connections wait in queue. When a slot is vacated or session resets, queued visitors are automatically admitted.
+
+          <div id="host-queue-container" style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+            <div id="host-queue-list">
+              <!-- Dynamically rendered queue items -->
+            </div>
+            <div id="host-queue-empty" style="font-size: 0.85rem; color: var(--text-muted); font-style: italic; padding: 10px 0; text-align: center;">
+              No participants currently in waiting queue.
+            </div>
+          </div>
+
+          <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
+            Reorder priority using ▲ / ▼, or promote a waiting participant directly into an open active slot.
           </p>
         </section>
 
