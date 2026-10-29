@@ -247,6 +247,7 @@ function restartBeatClock() {
   beatInterval = setInterval(() => {
     sendOscMessage('/baby/beat', 1);
     sendSerialCommand('BEAT');
+    setTimeout(() => sendOscMessage('/baby/beat', 0), 50);
   }, intervalMs);
 }
 
