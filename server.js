@@ -327,14 +327,18 @@ function startSession() {
 }
 
 function checkVotesAndEvaluate() {
-  // Only evaluate active players
+  // Only evaluate currently active players (those occupying a slot)
   const activeSlots = Object.entries(gameState.players)
     .filter(([slot, id]) => id !== null)
     .map(([slot]) => slot);
 
   if (activeSlots.length === 0) return;
 
-  const allActiveVoted = activeSlots.every(slot => gameState.votes[slot] !== null);
+  // Explicitly count votes so 2-player games resolve without waiting for slot 3
+  const votedCount = activeSlots.filter(slot => gameState.votes[slot] !== null).length;
+  const allActiveVoted = votedCount === activeSlots.length;
+
+  console.log(`[VOTE] ${votedCount}/${activeSlots.length} active players have voted.`);
 
   if (allActiveVoted && gameState.status === 'active') {
     clearInactivityTimer();

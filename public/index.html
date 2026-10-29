@@ -59,27 +59,8 @@
     </section>
 
     <!-- ================================================================= -->
-    <!-- 2B. VIEW: MID-GAME 3RD PLAYER PROMPT                              -->
+    <!-- 2B. MODAL: MID-GAME 3RD PLAYER PROMPT (overlay)                  -->
     <!-- ================================================================= -->
-    <section class="view-section" id="view-mid-game-prompt">
-      <div class="card" style="text-align: center; padding: 32px 20px;">
-        <span class="queue-badge" style="background: rgba(0, 210, 255, 0.15); color: var(--accent-cyan); margin-bottom: 16px;">
-          ⚡ Session In Progress
-        </span>
-        <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 8px;">Join Current Game?</h2>
-        <p style="font-size: 0.95rem; color: var(--text-sub); line-height: 1.5; margin-bottom: 24px;" id="mid-game-desc">
-          A session is currently underway with 2 players. You can join right now as Custodian 3, or wait in line for the next fresh session.
-        </p>
-        <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
-          <button class="btn-main" id="btn-join-current" style="background: linear-gradient(135deg, var(--happy-green), #059669); font-size: 1rem; padding: 15px;">
-            ✓ Join Current Game
-          </button>
-          <button class="choice-btn" id="btn-wait-next" style="text-align: center; justify-content: center; padding: 14px; width: 100%;">
-            <span style="font-weight: 600;">⏳ Wait for Next Game</span>
-          </button>
-        </div>
-      </div>
-    </section>
 
     <!-- ================================================================= -->
     <!-- 3. VIEW: LOBBY / READY ROOM                                       -->
@@ -235,6 +216,27 @@
     </footer>
 
   </main>
+
+  <!-- ================================================================= -->
+  <!-- MODAL: MID-GAME 3RD PLAYER PROMPT                                 -->
+  <!-- ================================================================= -->
+  <div class="modal-overlay" id="modal-mid-game">
+    <div class="modal-card" style="max-width: 360px;">
+      <div class="modal-icon">⚡</div>
+      <h3 class="modal-title" style="color: var(--accent-cyan);">Session In Progress</h3>
+      <p class="modal-text" id="mid-game-desc">
+        A session is currently underway. You can join right now as Custodian 3, or wait in line for the next fresh session.
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 8px;">
+        <button class="btn-main" id="btn-join-current" style="background: linear-gradient(135deg, var(--happy-green), #059669); font-size: 0.95rem; padding: 14px;">
+          ✓ Join Current Session
+        </button>
+        <button class="choice-btn" id="btn-wait-next" style="text-align: center; justify-content: center; padding: 13px; width: 100%;">
+          <span style="font-weight: 600;">⏳ Wait for Next Game</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ================================================================= -->
   <!-- MODAL: INACTIVITY WARNING (30s Idle + 6s Warning)                 -->

@@ -12,24 +12,24 @@
   // Views
   const viewConnecting = document.getElementById('view-connecting');
   const viewQueue = document.getElementById('view-queue');
-  const viewMidGamePrompt = document.getElementById('view-mid-game-prompt');
   const viewLobby = document.getElementById('view-lobby');
   const viewDilemma = document.getElementById('view-dilemma');
   const viewReveal = document.getElementById('view-reveal');
   const viewCompleted = document.getElementById('view-completed');
   const viewInactivityEnded = document.getElementById('view-inactivity-ended');
 
-  // Queue Elements
-  const queuePositionEl = document.getElementById('queue-position');
-  const queueMessageEl = document.getElementById('queue-message');
-
-  // Mid-Game Prompt Elements
+  // Mid-Game Modal Elements (overlay, not a view-section)
+  const modalMidGame = document.getElementById('modal-mid-game');
   const midGameDesc = document.getElementById('mid-game-desc');
   const btnJoinCurrent = document.getElementById('btn-join-current');
   const btnWaitNext = document.getElementById('btn-wait-next');
 
   // Session Ended Elements
   const btnReturnLobby = document.getElementById('btn-return-lobby');
+
+  // Queue Elements
+  const queuePositionEl = document.getElementById('queue-position');
+  const queueMessageEl = document.getElementById('queue-message');
 
   // Lobby Elements
   const lobbySlotBadge = document.getElementById('lobby-slot-badge');
@@ -88,12 +88,11 @@
     timeout: 20000
   });
 
-  // Helper: Switch Active View
+  // Helper: Switch Active View (modals are separate overlays, not view-sections)
   function showView(target) {
     [
       viewConnecting,
       viewQueue,
-      viewMidGamePrompt,
       viewLobby,
       viewDilemma,
       viewReveal,
@@ -103,6 +102,13 @@
       if (el) el.classList.remove('active');
     });
     if (target) target.classList.add('active');
+  }
+
+  function showMidGameModal(show) {
+    if (modalMidGame) {
+      if (show) modalMidGame.classList.add('active');
+      else modalMidGame.classList.remove('active');
+    }
   }
 
   // --- Connection Status Handlers ---
@@ -368,21 +374,23 @@
 
   // --- Mid-Game Joining Handlers (3rd Player) ---
   socket.on('mid-game-prompt', (data) => {
-    showView(viewMidGamePrompt);
+    const dirTitle = data?.directiveTitle ? ` "${data.directiveTitle}"` : '';
     if (midGameDesc) {
-      const dirTitle = data?.directiveTitle ? ` ("${data.directiveTitle}")` : '';
-      midGameDesc.textContent = `A session is currently underway with 2 players on Directive #${data?.directiveIndex || 1}${dirTitle}. You can join right now as Custodian 3, or wait in line for the next fresh session.`;
+      midGameDesc.textContent = `A session is underway on Directive #${data?.directiveIndex || 1}${dirTitle} with 2 active players. Join now as Custodian 3, or wait in line for the next fresh session.`;
     }
+    showMidGameModal(true);
   });
 
   if (btnJoinCurrent) {
     btnJoinCurrent.addEventListener('click', () => {
+      showMidGameModal(false);
       socket.emit('choose-mid-game', { choice: 'join' });
     });
   }
 
   if (btnWaitNext) {
     btnWaitNext.addEventListener('click', () => {
+      showMidGameModal(false);
       socket.emit('choose-mid-game', { choice: 'wait' });
     });
   }

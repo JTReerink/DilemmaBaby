@@ -28,7 +28,7 @@ const OSC_HOST = getArgValue('--osc-host', process.env.OSC_HOST || '127.0.0.1');
 const OSC_PORT = parseInt(getArgValue('--osc-port', process.env.OSC_PORT || '8000'), 10);
 
 const SERIAL_PORT_NAME = getArgValue('--port', process.env.SERIAL_PORT || null);
-const BAUD_RATE = parseInt(getArgValue('--baud', process.env.BAUD_RATE || '9600'), 10);
+const BAUD_RATE = parseInt(getArgValue('--baud', process.env.BAUD_RATE || '115200'), 10);
 const SIMULATION_MODE = args.includes('--sim');
 
 console.log('\n=============================================================');
@@ -126,6 +126,22 @@ async function connectSerial() {
     if (!isScanningForPort) {
       console.log('[SERIAL] No Arduino detected on USB. Polling every 4 seconds...');
       isScanningForPort = true;
+
+      // List all available ports to help the user identify the correct one
+      try {
+        const allPorts = await SerialPort.list();
+        if (allPorts.length === 0) {
+          console.log('[SERIAL] No serial ports found on this system at all.');
+        } else {
+          console.log('[SERIAL] Available serial ports:');
+          allPorts.forEach(p => {
+            console.log(`  - ${p.path}  |  Manufacturer: ${p.manufacturer || 'Unknown'}  |  VendorID: ${p.vendorId || '-'}  |  PnP: ${p.pnpId || '-'}`);
+          });
+          console.log('[SERIAL] Tip: pass --port <portname> to force a specific port, e.g. --port COM3');
+        }
+      } catch (listErr) {
+        console.warn('[SERIAL] Could not list available ports:', listErr.message);
+      }
     }
     return;
   }
@@ -191,7 +207,7 @@ function sendSerialCommand(cmd) {
       if (err) {
         console.warn(`[SERIAL] Write error:`, err.message);
       } else {
-        console.log(`[HUB -> ARDUINO] ${cmd}`);
+        console.log(`[SERIAL -> ARDUINO] Sent: ${cmd}`);
       }
     });
   } else {
