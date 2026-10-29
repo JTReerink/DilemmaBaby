@@ -63,8 +63,9 @@
   const bd3 = document.getElementById('bd-3');
   const revealProgress = document.getElementById('reveal-progress');
 
-  // Completed Elements
+  // Completed & Footer Elements
   const completedText = document.getElementById('completed-text');
+  const footerTextEl = document.getElementById('footer-text');
 
   // Inactivity Modal Elements
   const modalInactivity = document.getElementById('modal-inactivity');
@@ -203,9 +204,12 @@
   function updateFromState(state) {
     if (!state) return;
 
-    // 1. Update Happiness
+    // 1. Update Happiness & Footer Text
     if (vitalScoreEl) {
       vitalScoreEl.textContent = `${state.happiness}/10`;
+    }
+    if (footerTextEl && settings.footerText) {
+      footerTextEl.textContent = settings.footerText;
     }
 
     // 1B. If 3rd player is choosing whether to join mid-game, keep modal open and don't render empty dilemma

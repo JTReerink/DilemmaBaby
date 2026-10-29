@@ -74,6 +74,7 @@
   const cfgP2Title = document.getElementById('cfg-p2-title');
   const cfgP3Title = document.getElementById('cfg-p3-title');
   const cfgCompleted = document.getElementById('cfg-completed');
+  const cfgFooter = document.getElementById('cfg-footer');
   const btnSaveSettings = document.getElementById('btn-save-settings');
 
   // --- State ---
@@ -491,6 +492,7 @@
       if (cfgInactivity) cfgInactivity.value = currentSettings.inactivityWarning || '';
       if (cfgExtendBtn) cfgExtendBtn.value = currentSettings.extendTimeButton || '';
       if (cfgCompleted) cfgCompleted.value = currentSettings.sessionCompleted || '';
+      if (cfgFooter) cfgFooter.value = currentSettings.footerText || 'Society 5.0 • Reimagining Autonomy';
 
       const pTitles = currentSettings.perspectiveTitles || {};
       if (cfgP1Title) cfgP1Title.value = pTitles['1'] || '';
@@ -511,6 +513,7 @@
       inactivityWarning: cfgInactivity.value,
       extendTimeButton: cfgExtendBtn.value,
       sessionCompleted: cfgCompleted.value,
+      footerText: cfgFooter ? cfgFooter.value : 'Society 5.0 • Reimagining Autonomy',
       perspectiveTitles: {
         '1': cfgP1Title.value,
         '2': cfgP2Title.value,

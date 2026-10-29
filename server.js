@@ -56,6 +56,7 @@ function loadData() {
       extendTimeButton: "Extend Time ⏱️",
       voteLocked: "Decision locked. Awaiting fellow custodians...",
       sessionCompleted: "All directives resolved. Session concluding...",
+      footerText: "Society 5.0 • Reimagining Autonomy",
       perspectiveTitles: {
         "1": "ECOLOGICAL & ENVIRONMENTAL PERSPECTIVE",
         "2": "SOCIAL TRIAGE & HEALTHCARE PERSPECTIVE",
