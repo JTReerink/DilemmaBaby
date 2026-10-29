@@ -8,6 +8,7 @@ const { io } = require('socket.io-client');
 const osc = require('node-osc');
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline');
+let currentHappiness = -1;
 
 // --- Command Line Argument Parsing ---
 const args = process.argv.slice(2);
@@ -227,7 +228,7 @@ connectSerial();
 // ============================================================================
 // 3. SOCKET.IO CLIENT (SERVER CONNECTION)
 // ============================================================================
-let currentHappiness = 5;
+currentHappiness = 5;
 
 const socket = io(SERVER_URL, {
   transports: ['websocket', 'polling'],
