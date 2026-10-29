@@ -38,6 +38,7 @@ body {
   color: var(--text-main);
   font-family: var(--font-sans);
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
@@ -59,7 +60,8 @@ body {
   width: 100%;
   margin: 0 auto;
   min-height: 100vh;
-  padding: 20px 18px 28px;
+  min-height: 100dvh;
+  padding: 14px 16px calc(18px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -145,9 +147,9 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
-  padding: 24px 20px;
+  padding: 22px 18px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   position: relative;
   overflow: hidden;
 }
@@ -710,7 +712,8 @@ body {
 .app-footer {
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
-  padding-top: 16px;
+  padding: 10px 0 4px;
+  flex-shrink: 0;
 }
