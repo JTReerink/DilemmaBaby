@@ -78,7 +78,9 @@
   let myVote = null;
   let latestState = null;
   let settings = {};
+  let secondsLeft = 30;
   let inactivityInterval = null;
+  let lastInteractionEmitTime = 0;
   let revealProgressInterval = null;
 
   // --- Socket.io Setup ---
@@ -208,24 +210,33 @@
 
     // 1B. If 3rd player is choosing whether to join mid-game, keep modal open and don't render empty dilemma
     if (isPendingLateJoin && !mySlot && !isQueued) {
+      if (btnExtendTime) btnExtendTime.style.display = 'none';
       showMidGameModal(true);
       return;
     }
 
-    // 2. Queue View (Player 4+)
-    if (isQueued) {
-      showView(viewQueue);
-      if (queuePositionEl) {
-        queuePositionEl.textContent = `#${state.queuePosition || 1}`;
+    // 2. Queue View (Player 4+) - Do NOT show Extend Time button for waiting room / spectators
+    if (isQueued || !mySlot) {
+      if (btnExtendTime) btnExtendTime.style.display = 'none';
+      stopContinuousTimer();
+      if (isQueued) {
+        showView(viewQueue);
+        if (queuePositionEl) {
+          queuePositionEl.textContent = `#${state.queuePosition || 1}`;
+        }
+        if (queueMessageEl && settings.queueMessage) {
+          queueMessageEl.textContent = settings.queueMessage.replace('{pos}', state.queuePosition || 1);
+        }
+        return;
       }
-      if (queueMessageEl && settings.queueMessage) {
-        queueMessageEl.textContent = settings.queueMessage.replace('{pos}', state.queuePosition || 1);
-      }
-      return;
+    } else {
+      if (btnExtendTime) btnExtendTime.style.display = 'inline-flex';
+      ensureContinuousTimerRunning();
     }
 
     // 2B. Inactivity Ended View
     if (state.status === 'inactivity-ended') {
+      stopContinuousTimer();
       hideInactivityModal();
       showView(viewInactivityEnded);
       return;
@@ -406,6 +417,7 @@
     // Haptic feedback for touch devices
     if (navigator.vibrate) navigator.vibrate(40);
 
+    resetContinuousTimer(true);
     socket.emit('cast-vote', { choice });
   }
 
@@ -415,6 +427,7 @@
   // --- Lobby Manual Start & Rejoin ---
   if (btnStartNow) {
     btnStartNow.addEventListener('click', () => {
+      resetContinuousTimer(false);
       socket.emit('player-start');
     });
   }
@@ -429,6 +442,7 @@
   // --- Late 3rd Player Joining Handlers ---
   function handleOfferLateJoin() {
     isPendingLateJoin = true;
+    if (btnExtendTime) btnExtendTime.style.display = 'none';
     if (midGameDesc) {
       midGameDesc.textContent = 'Two players are already at the table.';
     }
@@ -442,6 +456,7 @@
     btnJoinCurrent.addEventListener('click', () => {
       isPendingLateJoin = false;
       showMidGameModal(false);
+      resetContinuousTimer(false);
       socket.emit('accept-late-join');
     });
   }
@@ -450,6 +465,7 @@
     btnWaitNext.addEventListener('click', () => {
       isPendingLateJoin = false;
       showMidGameModal(false);
+      stopContinuousTimer();
       socket.emit('decline-late-join');
     });
   }
@@ -461,104 +477,167 @@
       if (!mySlot) {
         socket.emit('join-game');
       }
+      resetContinuousTimer(false);
       showView(viewLobby);
     });
   }
 
   socket.on('session-inactivity-ended', () => {
+    stopContinuousTimer();
     hideInactivityModal();
     showView(viewInactivityEnded);
   });
 
-  // --- Inactivity Timeout (30s Idle + 6s Warning) ---
-  // Waiting room / queued players NEVER receive or show inactivity warnings
-  socket.on('inactivity-warning', (data) => {
-    if (isQueued) return;
-    showInactivityModal(data.seconds || 6);
-  });
+  // --- Continuous 30s Inactivity Countdown & Warning Popup (<= 6s) ---
+  function renderExtendButton() {
+    const extendBtn = document.getElementById('extend-timer-btn') || btnExtendTime;
+    if (!extendBtn) return;
 
-  socket.on('inactivity-status', (data) => {
-    if (isQueued) return;
-    if (data && data.warning) {
-      const remainingSeconds = typeof data.remainingSeconds === 'number' ? data.remainingSeconds : 6;
-      if (modalInactivity && !modalInactivity.classList.contains('active')) {
-        showInactivityModal(remainingSeconds);
-      } else {
-        updateTimerVisuals(remainingSeconds);
-      }
-    } else {
-      hideInactivityModal();
+    if (isQueued || !mySlot) {
+      extendBtn.style.display = 'none';
+      return;
     }
-  });
 
-  socket.on('inactivity-cleared', () => {
-    hideInactivityModal();
-  });
+    extendBtn.style.display = 'inline-flex';
+    extendBtn.innerText = `⌛ Extend Time (${secondsLeft}s)`;
 
-  function showInactivityModal(seconds) {
-    if (modalInactivity) modalInactivity.classList.add('active');
+    if (secondsLeft <= 6 && latestState && latestState.status === 'active') {
+      extendBtn.classList.add('warning-active');
+      if (modalInactivity) modalInactivity.classList.add('active');
+      if (inactivityCountdown) inactivityCountdown.textContent = `${secondsLeft}s`;
+      if (btnImHere) btnImHere.textContent = `Yes, Keep Playing (${secondsLeft}s remaining)`;
+    } else {
+      extendBtn.classList.remove('warning-active');
+      if (modalInactivity) modalInactivity.classList.remove('active');
+      if (btnImHere) btnImHere.textContent = 'Yes, I am here! (Keep Playing)';
+    }
+  }
 
-    let remaining = seconds;
-    updateTimerVisuals(remaining);
+  function ensureContinuousTimerRunning() {
+    renderExtendButton();
+    if (inactivityInterval) return;
 
-    if (inactivityInterval) clearInterval(inactivityInterval);
     inactivityInterval = setInterval(() => {
-      remaining = Math.max(0, remaining - 1);
-      updateTimerVisuals(remaining);
-      if (remaining <= 0) {
-        clearInterval(inactivityInterval);
-        inactivityInterval = null;
+      if (isQueued || !mySlot) {
+        stopContinuousTimer();
+        return;
       }
+
+      if (latestState && latestState.status === 'active') {
+        secondsLeft = Math.max(0, secondsLeft - 1);
+      } else {
+        secondsLeft = 30;
+      }
+      renderExtendButton();
     }, 1000);
   }
 
-  function updateTimerVisuals(remainingSeconds) {
-    if (inactivityCountdown) inactivityCountdown.textContent = `${remainingSeconds}s`;
-    if (btnImHere) btnImHere.textContent = `Yes, Keep Playing (${remainingSeconds}s remaining)`;
-    const extendBtn = document.getElementById('extend-timer-btn') || btnExtendTime;
-    if (extendBtn) {
-      extendBtn.innerText = `⏳ Extend Time (${remainingSeconds}s)`;
-      extendBtn.classList.add('warning-active');
+  function stopContinuousTimer() {
+    if (inactivityInterval) {
+      clearInterval(inactivityInterval);
+      inactivityInterval = null;
+    }
+  }
+
+  function resetContinuousTimer(emitToServer = false) {
+    secondsLeft = 30;
+    renderExtendButton();
+
+    if (inactivityInterval) {
+      clearInterval(inactivityInterval);
+      inactivityInterval = null;
+    }
+    if (!isQueued && mySlot) {
+      ensureContinuousTimerRunning();
+    }
+
+    if (emitToServer && latestState && latestState.status === 'active') {
+      socket.emit('extend-timer');
+      socket.emit('extend-time');
     }
   }
 
   function hideInactivityModal() {
     if (modalInactivity) modalInactivity.classList.remove('active');
-    if (inactivityInterval) {
-      clearInterval(inactivityInterval);
-      inactivityInterval = null;
-    }
     const extendBtn = document.getElementById('extend-timer-btn') || btnExtendTime;
     if (extendBtn) {
-      extendBtn.innerText = "⏳ Extend Time";
       extendBtn.classList.remove('warning-active');
-      extendBtn.style.borderColor = '';
-      extendBtn.style.color = '';
     }
     if (btnImHere) {
       btnImHere.textContent = 'Yes, I am here! (Keep Playing)';
     }
   }
 
-  // User confirms presence
-  btnImHere.addEventListener('click', () => {
+  // Server sync events for inactivity
+  socket.on('inactivity-reset', (data) => {
+    if (isQueued) return;
+    secondsLeft = (data && typeof data.secondsLeft === 'number') ? data.secondsLeft : 30;
     hideInactivityModal();
-    socket.emit('extend-time');
+    renderExtendButton();
   });
 
-  // Persistent Extend Time Button in Top Corner
-  btnExtendTime.addEventListener('click', () => {
-    socket.emit('extend-time');
-    // Visual feedback on button
-    btnExtendTime.style.borderColor = 'var(--happy-green)';
-    btnExtendTime.style.color = 'var(--happy-green)';
-    setTimeout(() => {
-      if (!modalInactivity.classList.contains('active')) {
-        btnExtendTime.style.borderColor = '';
-        btnExtendTime.style.color = '';
-      }
-    }, 1000);
+  socket.on('inactivity-cleared', () => {
+    if (isQueued) return;
+    secondsLeft = 30;
+    hideInactivityModal();
+    renderExtendButton();
   });
+
+  socket.on('inactivity-warning', (data) => {
+    if (isQueued) return;
+    secondsLeft = (data && typeof data.seconds === 'number') ? data.seconds : 6;
+    renderExtendButton();
+  });
+
+  socket.on('inactivity-status', (data) => {
+    if (isQueued) return;
+    if (data && data.warning) {
+      secondsLeft = typeof data.remainingSeconds === 'number' ? data.remainingSeconds : 6;
+      renderExtendButton();
+    } else {
+      secondsLeft = 30;
+      hideInactivityModal();
+      renderExtendButton();
+    }
+  });
+
+  // User confirms presence in modal
+  if (btnImHere) {
+    btnImHere.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetContinuousTimer(true);
+    });
+  }
+
+  // Persistent Extend Time Button in Top Corner
+  if (btnExtendTime) {
+    btnExtendTime.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetContinuousTimer(true);
+      btnExtendTime.style.borderColor = 'var(--happy-green)';
+      btnExtendTime.style.color = 'var(--happy-green)';
+      setTimeout(() => {
+        if (secondsLeft > 6) {
+          btnExtendTime.style.borderColor = '';
+          btnExtendTime.style.color = '';
+        }
+      }, 800);
+    });
+  }
+
+  // Any touch or click interaction on the active player UI resets the 30s counter
+  function handleUserActivity() {
+    if (isQueued || !mySlot || !latestState || latestState.status !== 'active') return;
+    const now = Date.now();
+    const shouldEmit = (now - lastInteractionEmitTime > 1500) || (secondsLeft <= 10);
+    if (shouldEmit) {
+      lastInteractionEmitTime = now;
+    }
+    resetContinuousTimer(shouldEmit);
+  }
+
+  document.addEventListener('touchstart', handleUserActivity, { passive: true });
+  document.addEventListener('click', handleUserActivity);
 
   // Happiness event listener for vital HUD
   socket.on('happiness-update', (data) => {

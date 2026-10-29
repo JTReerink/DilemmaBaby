@@ -441,16 +441,18 @@ function advanceToNextDilemma() {
   }
 }
 
-// --- Inactivity Timer (30s Idle + 6s Warning) ---
+// --- Inactivity Timer (30s Total: 24s + 6s Warning) ---
 function resetInactivityTimer() {
   clearInactivityTimer();
 
   if (gameState.status !== 'active') return;
 
-  // 30 seconds of inactivity triggers warning modal
+  emitToActivePlayers('inactivity-reset', { secondsLeft: 30 });
+
+  // After 24s of inactivity (6s remaining of 30s), trigger warning modal
   inactivityTimer = setTimeout(() => {
     triggerInactivityWarning();
-  }, 30000);
+  }, 24000);
 }
 
 function emitToActivePlayers(event, payload) {
@@ -706,6 +708,10 @@ io.on('connection', (socket) => {
 
   // Player Extend Time
   socket.on('extend-time', () => {
+    extendTime();
+  });
+
+  socket.on('extend-timer', () => {
     extendTime();
   });
 
