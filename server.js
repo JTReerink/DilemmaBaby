@@ -412,6 +412,51 @@ function checkVotesAndEvaluate() {
   }
 }
 
+function concludeSessionAndResetLobby(reason, message) {
+  clearAllTimers();
+
+  const finalHappiness = gameState.happiness;
+
+  // 1. Emit 'session-ended' strictly to the sockets currently in gameState.players
+  emitToActivePlayers('session-ended', {
+    reason,
+    finalHappiness,
+    message
+  });
+
+  if (reason === 'inactivity') {
+    emitToActivePlayers('session-inactivity-ended');
+  }
+
+  // 2. Immediately reset server state back to a fresh, empty lobby
+  gameState.players = { '1': null, '2': null, '3': null };
+  gameState.votes = { '1': null, '2': null, '3': null };
+  gameState.happiness = 5;
+  gameState.currentDilemmaIndex = 0;
+  gameState.status = 'lobby';
+  gameState.result = null;
+  gameState.inactivityWarning = false;
+
+  // 3. Promote any waiting queue players into the now-empty lobby slots
+  for (const slot of ['1', '2', '3']) {
+    if (gameState.queue.length > 0) {
+      promoteFromQueue(slot);
+    }
+  }
+
+  console.log(`[SESSION ENDED] Reason: ${reason}. Server immediately reset to fresh lobby.`);
+
+  io.emit('happiness-update', {
+    happiness: 5,
+    previousHappiness: finalHappiness,
+    change: 0,
+    reason: 'reset'
+  });
+
+  checkLobbyReadiness();
+  broadcastGameState();
+}
+
 function advanceToNextDilemma() {
   clearTimeout(autoAdvanceTimer);
   autoAdvanceTimer = null;
@@ -427,18 +472,12 @@ function advanceToNextDilemma() {
     resetInactivityTimer();
     broadcastGameState();
   } else {
-    // All dilemmas completed
-    console.log('[COMPLETED] All dilemmas finished. Session complete.');
-    gameState.status = 'completed';
-    gameState.result = {
-      consensus: true,
-      message: settings.sessionCompleted || "All directives resolved. Session concluding..."
-    };
-    broadcastGameState();
-
-    setTimeout(() => {
-      resetSession(true);
-    }, 5000);
+    // All dilemmas completed -> lock active players on end screen & immediately reset server lobby
+    console.log('[COMPLETED] All dilemmas finished. Concluding session and resetting lobby.');
+    concludeSessionAndResetLobby(
+      'completed',
+      settings.sessionCompleted || "All directives resolved. The baby's vital equilibrium has stabilized."
+    );
   }
 }
 
@@ -497,25 +536,10 @@ function triggerInactivityWarning() {
 
 function handleInactivitySessionEnded() {
   console.log('[INACTIVITY] 6s warning elapsed without response. Session ended due to inactivity.');
-  clearAllTimers();
-
-  gameState.happiness = 5;
-  gameState.currentDilemmaIndex = 0;
-  gameState.votes = { '1': null, '2': null, '3': null };
-  gameState.status = 'inactivity-ended';
-  gameState.result = null;
-  gameState.inactivityWarning = false;
-
-  // Inform active players with the confirmation screen
-  emitToActivePlayers('session-inactivity-ended');
-
-  io.emit('happiness-update', {
-    happiness: 5,
-    change: 0,
-    reason: 'inactivity-reset'
-  });
-
-  broadcastGameState();
+  concludeSessionAndResetLobby(
+    'inactivity',
+    'Session expired due to inactivity. The game has stopped.'
+  );
 }
 
 function extendTime() {

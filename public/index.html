@@ -187,32 +187,19 @@
     </section>
 
     <!-- ================================================================= -->
-    <!-- 6. VIEW: SESSION COMPLETED                                        -->
+    <!-- 6. VIEW: SESSION ENDED (LOCKED END SCREEN)                        -->
     <!-- ================================================================= -->
-    <section class="view-section" id="view-completed">
+    <section class="view-section" id="screen-end">
       <div class="card" style="text-align: center; padding: 40px 20px;">
-        <div style="font-size: 2.4rem; margin-bottom: 12px;">🌱</div>
-        <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 10px;">Session Completed</h2>
-        <p style="font-size: 0.95rem; color: var(--text-sub); line-height: 1.5;" id="completed-text">
-          All directives resolved. The baby's vital equilibrium has stabilized. Returning to lobby...
-        </p>
-      </div>
-    </section>
-
-    <!-- ================================================================= -->
-    <!-- 7. VIEW: SESSION EXPIRED (INACTIVITY CONFIRMATION SCREEN)         -->
-    <!-- ================================================================= -->
-    <section class="view-section" id="view-inactivity-ended">
-      <div class="card" style="text-align: center; padding: 40px 20px;">
-        <div style="font-size: 2.6rem; margin-bottom: 14px;">⏳</div>
-        <h2 style="font-size: 1.45rem; font-weight: 800; margin-bottom: 12px; color: var(--warning-amber);">
-          Session Expired
+        <div style="font-size: 2.6rem; margin-bottom: 14px;" id="end-screen-icon">🌱</div>
+        <h2 style="font-size: 1.45rem; font-weight: 800; margin-bottom: 12px; color: var(--accent-cyan);" id="end-screen-title">
+          Session Ended
         </h2>
-        <p style="font-size: 0.95rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 26px;">
-          Session expired due to inactivity. The game has stopped.
+        <p style="font-size: 0.95rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 26px;" id="end-screen-message">
+          All directives resolved. The baby's vital equilibrium has stabilized.
         </p>
-        <button class="btn-main" id="btn-return-lobby" style="font-size: 1rem; padding: 15px;">
-          Return to Lobby
+        <button class="btn-main" id="btn-exit-session" style="font-size: 1rem; padding: 15px;">
+          Exit Session
         </button>
       </div>
     </section>

@@ -5,6 +5,8 @@
 // ============================================================================
 
 (function () {
+  let sessionFinished = false;
+
   // --- DOM Elements ---
   const vitalScoreEl = document.getElementById('vital-score');
   const btnExtendTime = document.getElementById('extend-timer-btn') || document.getElementById('btn-extend-time');
@@ -15,8 +17,7 @@
   const viewLobby = document.getElementById('view-lobby');
   const viewDilemma = document.getElementById('view-dilemma');
   const viewReveal = document.getElementById('view-reveal');
-  const viewCompleted = document.getElementById('view-completed');
-  const viewInactivityEnded = document.getElementById('view-inactivity-ended');
+  const screenEnd = document.getElementById('screen-end');
 
   // Mid-Game Modal Elements (overlay, not a view-section)
   const modalMidGame = document.getElementById('modal-mid-game');
@@ -25,7 +26,10 @@
   const btnWaitNext = document.getElementById('btn-wait-next');
 
   // Session Ended Elements
-  const btnReturnLobby = document.getElementById('btn-return-lobby');
+  const endScreenIcon = document.getElementById('end-screen-icon');
+  const endScreenTitle = document.getElementById('end-screen-title');
+  const endScreenMessage = document.getElementById('end-screen-message');
+  const btnExitSession = document.getElementById('btn-exit-session');
 
   // Queue Elements
   const queuePositionEl = document.getElementById('queue-position');
@@ -102,8 +106,7 @@
       viewLobby,
       viewDilemma,
       viewReveal,
-      viewCompleted,
-      viewInactivityEnded
+      screenEnd
     ].forEach(el => {
       if (el) el.classList.remove('active');
     });
@@ -119,23 +122,27 @@
 
   // --- Connection Status Handlers ---
   socket.on('connect', () => {
+    if (sessionFinished) return;
     console.log('[SOCKET] Connected to bio-server with ID:', socket.id);
     // Explicitly join as a mobile player (prevents hub/host from being counted as players)
     socket.emit('join-game');
   });
 
   socket.on('connect_error', (err) => {
+    if (sessionFinished) return;
     console.warn('[SOCKET] Connecting to cloud instance...', err.message);
     showView(viewConnecting);
   });
 
   socket.on('disconnect', () => {
+    if (sessionFinished) return;
     console.warn('[SOCKET] Disconnected. Reconnecting...');
     showView(viewConnecting);
   });
 
   // --- Initialization ---
   socket.on('init-state', (data) => {
+    if (sessionFinished) return;
     mySlot = data.slot;
     isQueued = !!data.isQueued;
     isPendingLateJoin = !!data.pendingMidGame;
@@ -148,6 +155,7 @@
   });
 
   socket.on('assigned-slot', (data) => {
+    if (sessionFinished) return;
     mySlot = data.slot;
     isQueued = false;
     isPendingLateJoin = false;
@@ -160,6 +168,7 @@
   // --- Host Force Lobby Reset (Kicks all players back to lobby screen) ---
   socket.on('lobby-force-reset', () => {
     console.log('[RESET] Host reset the lobby. Clearing local slot state.');
+    sessionFinished = false;
     mySlot = null;
     isQueued = false;
     isPendingLateJoin = false;
@@ -185,6 +194,7 @@
 
   // --- Game State Broadcast ---
   socket.on('game-state', (state) => {
+    if (sessionFinished) return;
     latestState = state;
     if (state.settings) settings = state.settings;
     if (state.assignedSlot) {
@@ -202,7 +212,7 @@
 
   // --- Main State Visualizer ---
   function updateFromState(state) {
-    if (!state) return;
+    if (!state || sessionFinished) return;
 
     // 1. Update Happiness & Footer Text
     if (vitalScoreEl) {
@@ -236,14 +246,6 @@
     } else {
       if (btnExtendTime) btnExtendTime.style.display = 'inline-flex';
       ensureContinuousTimerRunning();
-    }
-
-    // 2B. Inactivity Ended View
-    if (state.status === 'inactivity-ended') {
-      stopContinuousTimer();
-      hideInactivityModal();
-      showView(viewInactivityEnded);
-      return;
     }
 
     // 3. Lobby View (Status: lobby or ready)
@@ -358,14 +360,6 @@
       startRevealProgressBar(6);
       return;
     }
-
-    // 6. Completed View
-    if (state.status === 'completed') {
-      showView(viewCompleted);
-      if (completedText && settings.sessionCompleted) {
-        completedText.textContent = settings.sessionCompleted;
-      }
-    }
   }
 
   function formatVoteBreakdown(el, vote) {
@@ -474,23 +468,44 @@
     });
   }
 
-  // --- Return to Lobby from Session Expired Screen ---
-  if (btnReturnLobby) {
-    btnReturnLobby.addEventListener('click', () => {
-      socket.emit('return-to-lobby');
-      if (!mySlot) {
-        socket.emit('join-game');
-      }
-      resetContinuousTimer(false);
-      showView(viewLobby);
-    });
-  }
-
-  socket.on('session-inactivity-ended', () => {
+  // --- Session End Lock & Hard Reload Exit ---
+  function handleSessionEnded(data) {
+    sessionFinished = true;
     stopContinuousTimer();
     hideInactivityModal();
-    showView(viewInactivityEnded);
-  });
+    showMidGameModal(false);
+
+    if (btnExtendTime) {
+      btnExtendTime.style.display = 'none';
+    }
+
+    const isInactivity = data?.reason === 'inactivity';
+    if (endScreenIcon) {
+      endScreenIcon.textContent = isInactivity ? '⏳' : '🌱';
+    }
+    if (endScreenTitle) {
+      endScreenTitle.textContent = isInactivity ? 'Session Expired' : 'Session Ended';
+      endScreenTitle.style.color = isInactivity ? 'var(--warning-amber)' : 'var(--accent-cyan)';
+    }
+    if (endScreenMessage) {
+      endScreenMessage.textContent = data?.message || (
+        isInactivity
+          ? 'Session expired due to inactivity. The game has stopped.'
+          : (settings.sessionCompleted || "All directives resolved. The baby's vital equilibrium has stabilized.")
+      );
+    }
+
+    showView(screenEnd);
+  }
+
+  socket.on('session-ended', handleSessionEnded);
+  socket.on('session-inactivity-ended', () => handleSessionEnded({ reason: 'inactivity' }));
+
+  if (btnExitSession) {
+    btnExitSession.addEventListener('click', () => {
+      window.location.reload();
+    });
+  }
 
   // --- Continuous 30s Inactivity Countdown & Warning Popup (<= 6s) ---
   function renderExtendButton() {
