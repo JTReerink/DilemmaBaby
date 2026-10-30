@@ -7,9 +7,9 @@
       { "id": "B", "text": "Refuse the Therapy" }
     ],
     "perspectives": {
-      "1": "ENVIRONMENTAL COST: Producing this single dose requires rare minerals whose refining dumps toxic waste into the local water supply, threatening clean drinking water for 10,000 nearby residents.",
-      "2": "HEALTHCARE FAIRNESS: Giving this experimental dose to this baby uses up the hospital's emergency budget, taking away treatment from another critically ill infant on the waiting list who has a much higher chance of survival.",
-      "3": "PERSONAL FREEDOM: The biotech company offers the treatment for free, but only if they own lifetime rights to record and sell the child's brain activity, emotions, and behavior to train commercial AI."
+      "1": "Producing this single dose requires rare minerals whose refining dumps toxic waste into the local water supply, threatening clean drinking water for 10,000 nearby residents.",
+      "2": "Giving this experimental dose to this baby uses up the hospital's emergency budget, taking away treatment from another critically ill infant on the waiting list who has a much higher chance of survival.",
+      "3": "The biotech company offers the treatment for free, but only if they own lifetime rights to record and sell the child's brain activity, emotions, and behavior to train commercial AI."
     }
   },
   {
@@ -20,9 +20,9 @@
       { "id": "B", "text": "Use the Human Donor Organ" }
     ],
     "perspectives": {
-      "1": "ENVIRONMENTAL COST: Manufacturing the artificial organ releases severe electronic waste and chemical micro-pollutants that poison local city waterways and kill off pollinating birds and insects.",
-      "2": "HEALTHCARE FAIRNESS: Choosing the human donor organ instead saves this baby organically, but takes that scarce donor organ away from a neighboring, underfunded hospital district that desperately needs it.",
-      "3": "PERSONAL FREEDOM: The artificial organ runs on locked corporate cloud software; if the family ever fails to pay the monthly subscription or rejects new data-tracking terms, the company will remotely reduce the organ's performance."
+      "1": "Manufacturing the artificial organ releases severe electronic waste and chemical micro-pollutants that poison local city waterways and kill off pollinating birds and insects.",
+      "2": "Choosing the human donor organ instead saves this baby organically, but takes that scarce donor organ away from a neighboring, underfunded hospital district that desperately needs it.",
+      "3": "The artificial organ runs on locked corporate cloud software; if the family ever fails to pay the monthly subscription or rejects new data-tracking terms, the company will remotely reduce the organ's performance."
     }
   },
   {
@@ -33,9 +33,9 @@
       { "id": "B", "text": "Rely on Human Care Only" }
     ],
     "perspectives": {
-      "1": "ENVIRONMENTAL COST: Keeping the caretaking drone hovering 24/7 creates constant high-pitched noise pollution and burns through lithium batteries that damage local urban wildlife.",
-      "2": "HEALTHCARE FAIRNESS: City welfare algorithms flag any family that refuses the AI Guardian as 'high-risk,' triggering invasive home inspections and cutting their public childcare support.",
-      "3": "PERSONAL FREEDOM: The drone analyzes every cry, facial expression, and hug, replacing spontaneous human warmth with automated soothing routines designed to make the child calmer and more obedient."
+      "1": "Keeping the caretaking drone hovering 24/7 creates constant high-pitched noise pollution and burns through lithium batteries that damage local urban wildlife.",
+      "2": "City welfare algorithms flag any family that refuses the AI Guardian as 'high-risk,' triggering invasive home inspections and cutting their public childcare support.",
+      "3": "The drone analyzes every cry, facial expression, and hug, replacing spontaneous human warmth with automated soothing routines designed to make the child calmer and more obedient."
     }
   },
   {
@@ -46,9 +46,9 @@
       { "id": "B", "text": "Let the Brain Grow Naturally" }
     ],
     "perspectives": {
-      "1": "ENVIRONMENTAL COST: The supercooled servers needed to stream knowledge into the baby's sleeping brain consume as much electricity as an entire neighborhood uses during winter.",
-      "2": "HEALTHCARE FAIRNESS: Refusing this cognitive boost risks leaving the child far behind peers whose families use neural streaming, while approving it deepens the gap between enhanced and natural children.",
-      "3": "PERSONAL FREEDOM: The sleep-learning program is designed by a state economic algorithm that quietly shapes the baby's talents and desires toward future labor shortages before the child can ever choose their own path."
+      "1": "The supercooled servers needed to stream knowledge into the baby's sleeping brain consume as much electricity as an entire neighborhood uses during winter.",
+      "2": "Refusing this cognitive boost risks leaving the child far behind peers whose families use neural streaming, while approving it deepens the gap between enhanced and natural children.",
+      "3": "The sleep-learning program is designed by a state economic algorithm that quietly shapes the baby's talents and desires toward future labor shortages before the child can ever choose their own path."
     }
   },
   {
@@ -59,9 +59,9 @@
       { "id": "B", "text": "Stick to Natural Food" }
     ],
     "perspectives": {
-      "1": "ENVIRONMENTAL COST: Growing the synthetic algae for this formula in industrial vats drains massive amounts of phosphorus from the soil, weakening farmland needed for local food crops.",
-      "2": "HEALTHCARE FAIRNESS: Subsidizing this tailored formula for one infant drains the city's children's clinic budget, forcing price increases on everyday medicine for hundreds of other families.",
-      "3": "PERSONAL FREEDOM: The engineered formula permanently rewires the baby's digestion so their body can only process patented nutrients, locking them into buying food from one corporation for life."
+      "1": "Growing the synthetic algae for this formula in industrial vats drains massive amounts of phosphorus from the soil, weakening farmland needed for local food crops.",
+      "2": "Subsidizing this tailored formula for one infant drains the city's children's clinic budget, forcing price increases on everyday medicine for hundreds of other families.",
+      "3": "The engineered formula permanently rewires the baby's digestion so their body can only process patented nutrients, locking them into buying food from one corporation for life."
     }
   }
 ]

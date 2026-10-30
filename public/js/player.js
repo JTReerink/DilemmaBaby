@@ -302,9 +302,9 @@
 
       if (lobbyStatusMsg) {
         if (state.status === 'ready') {
-          lobbyStatusMsg.textContent = settings.lobbyReady || 'Session is ready to begin! Click Start Game to start.';
+          lobbyStatusMsg.textContent = settings.lobbyReady || 'Everyone is here. Ready to begin!';
         } else {
-          const templ = settings.lobbyWaiting || 'Waiting for co-custodians ({count}/3 connected)...';
+          const templ = settings.lobbyWaiting || 'Waiting for others to join ({count}/3 connected)...';
           lobbyStatusMsg.textContent = templ.replace('{count}', count);
         }
       }
@@ -321,19 +321,19 @@
       showView(viewDilemma);
 
       if (dilemmaIndexLabel) {
-        dilemmaIndexLabel.textContent = `DIRECTIVE 0${(state.currentDilemmaIndex || 0) + 1} OF 0${state.totalDilemmas || 5}`;
+        dilemmaIndexLabel.textContent = `CASE 0${(state.currentDilemmaIndex || 0) + 1} OF 0${state.totalDilemmas || 5}`;
       }
 
       if (dilemmaTitle) {
-        dilemmaTitle.textContent = state.currentDilemmaTitle || 'Evaluating Scenario...';
+        dilemmaTitle.textContent = state.currentDilemmaTitle || 'Loading Case...';
       }
 
       if (perspectiveTitle) {
-        perspectiveTitle.textContent = state.myPerspectiveTitle || `PLAYER ${mySlot} PERSPECTIVE`;
+        perspectiveTitle.textContent = state.myPerspectiveTitle || `WHAT ONLY YOU KNOW`;
       }
 
       if (perspectiveBody) {
-        perspectiveBody.textContent = state.myPerspective || 'Awaiting transmission parameters...';
+        perspectiveBody.textContent = state.myPerspective || 'Receiving private briefing...';
       }
 
       // Choices
@@ -381,7 +381,7 @@
       }
 
       if (revealTitle) {
-        revealTitle.textContent = isConsensus ? 'CONSENSUS ACHIEVED' : 'ETHICAL DISCORD DETECTED';
+        revealTitle.textContent = isConsensus ? 'YOU REACHED AGREEMENT' : 'DIVIDED AT THE TABLE';
       }
 
       if (revealMessage) {
@@ -529,7 +529,7 @@
       endScreenMessage.textContent = data?.message || (
         isInactivity
           ? 'Session expired due to inactivity. The game has stopped.'
-          : (settings.sessionCompleted || "All directives resolved. The baby's vital equilibrium has stabilized.")
+          : (settings.sessionCompleted || "All cases decided. The baby's heartbeat settles into its final rhythm.")
       );
     }
 

@@ -1,19 +1,19 @@
 {
-  "unanimousFeedback": "Unanimous decision reached! The baby calms down.",
-  "splitFeedback": "No consensus reached! The baby becomes uneasy.",
+  "unanimousFeedback": "You all agreed! The tension fades and the baby calms down.",
+  "splitFeedback": "You are divided! The baby senses the conflict and grows restless.",
   "lobbyWelcome": "Welcome to Dilemma Baby.",
   "lobbyWaiting": "Waiting for others to join ({count}/3 connected)...",
-  "lobbyReady": "Session is ready to begin!",
+  "lobbyReady": "Everyone is here. Ready to begin!",
   "lobbyAutoStart": "Starting session in {seconds}s...",
-  "queueMessage": "You are in line! Queue position: #{pos}. Waiting for current session to finish...",
+  "queueMessage": "You are in line! Queue position: #{pos}. Waiting for the current group to finish...",
   "inactivityWarning": "Are you still there? Session resets in {seconds} seconds...",
   "extendTimeButton": "Extend Time ⏱️",
-  "voteLocked": "Decision locked. Awaiting for others to answer...",
-  "sessionCompleted": "All directives resolved. Session concluding...",
+  "voteLocked": "Choice locked in. Waiting for the others at the table...",
+  "sessionCompleted": "All cases decided. The baby's heartbeat settles into its final rhythm...",
   "footerText": "Jaap Reerink • Student Immersive Media • Nederlandse Filmacademie",
   "perspectiveTitles": {
-    "1": "ECOLOGICAL & ENVIRONMENTAL PERSPECTIVE",
-    "2": "SOCIAL TRIAGE & HEALTHCARE PERSPECTIVE",
-    "3": "ALGORITHMIC & DATA AUTONOMY PERSPECTIVE"
+    "1": "WHAT THIS COSTS THE PLANET",
+    "2": "WHO GETS LEFT BEHIND",
+    "3": "WHO CONTROLS THE CHILD'S FUTURE"
   }
 }
