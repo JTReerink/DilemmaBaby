@@ -1,67 +1,67 @@
 [
   {
     "id": 1,
-    "title": "Directive 01: Experimental Gene Therapy",
+    "title": "Case 01: Experimental Gene Therapy",
     "choices": [
-      { "id": "A", "text": "Authorize Treatment" },
-      { "id": "B", "text": "Decline Treatment" }
+      { "id": "A", "text": "Approve the Therapy" },
+      { "id": "B", "text": "Refuse the Therapy" }
     ],
     "perspectives": {
-      "1": "ECOLOGICAL IMPACT: The therapy relies on rare earth minerals whose high-temperature refinement discharges toxic chemical effluent into the regional drinking aquifer, jeopardizing water access for 10,000 residents.",
-      "2": "SOCIAL TRIAGE: Granting this experimental therapy depletes the emergency pediatric quota, displacing another critically ill infant on the waiting list who holds a significantly higher statistical survival rate.",
-      "3": "DATA AUTONOMY: The bio-tech corporation offers the treatment free of charge in exchange for lifetime telemetry rights, permanently streaming the child's neural and behavioral data into commercial models."
+      "1": "ENVIRONMENTAL COST: Producing this single dose requires rare minerals whose refining dumps toxic waste into the local water supply, threatening clean drinking water for 10,000 nearby residents.",
+      "2": "HEALTHCARE FAIRNESS: Giving this experimental dose to this baby uses up the hospital's emergency budget, taking away treatment from another critically ill infant on the waiting list who has a much higher chance of survival.",
+      "3": "PERSONAL FREEDOM: The biotech company offers the treatment for free, but only if they own lifetime rights to record and sell the child's brain activity, emotions, and behavior to train commercial AI."
     }
   },
   {
     "id": 2,
-    "title": "Directive 02: Synthetic Cardiopulmonary Matrix",
+    "title": "Case 02: Artificial Heart & Lungs",
     "choices": [
-      { "id": "A", "text": "Deploy Cyber-Organ" },
-      { "id": "B", "text": "Preserve Organic State" }
+      { "id": "A", "text": "Implant the Artificial Organ" },
+      { "id": "B", "text": "Use the Human Donor Organ" }
     ],
     "perspectives": {
-      "1": "ECOLOGICAL IMPACT: Fabricating the synthetic organ generates acute electronic waste and micro-pollutants that disrupt local urban waterways and avian pollinators.",
-      "2": "SOCIAL TRIAGE: A human donor organ is available, but allocating it here denies care to an adjacent hospital district that has experienced chronic resource disinvestment.",
-      "3": "DATA AUTONOMY: The synthetic organ requires proprietary cloud firmware updates; failure to subscribe to corporate biometric terms will remotely throttle organ efficiency."
+      "1": "ENVIRONMENTAL COST: Manufacturing the artificial organ releases severe electronic waste and chemical micro-pollutants that poison local city waterways and kill off pollinating birds and insects.",
+      "2": "HEALTHCARE FAIRNESS: Choosing the human donor organ instead saves this baby organically, but takes that scarce donor organ away from a neighboring, underfunded hospital district that desperately needs it.",
+      "3": "PERSONAL FREEDOM: The artificial organ runs on locked corporate cloud software; if the family ever fails to pay the monthly subscription or rejects new data-tracking terms, the company will remotely reduce the organ's performance."
     }
   },
   {
     "id": 3,
-    "title": "Directive 03: Autonomous Drone Guardian",
+    "title": "Case 03: AI Caretaking Drone",
     "choices": [
-      { "id": "A", "text": "Activate AI Guardian" },
-      { "id": "B", "text": "Rely on Human Care" }
+      { "id": "A", "text": "Activate the AI Guardian" },
+      { "id": "B", "text": "Rely on Human Care Only" }
     ],
     "perspectives": {
-      "1": "ECOLOGICAL IMPACT: Constant aerial hovering generates persistent high-frequency acoustic waves and lithium battery turnover that harms domestic urban ecosystems.",
-      "2": "SOCIAL TRIAGE: Municipal authorities penalize households that opt out of algorithmic guardianship with mandatory child-welfare audits due to heightened risk metrics.",
-      "3": "DATA AUTONOMY: The drone scores every emotional cry, facial expression, and parental embrace, conditioning sensory feedback strictly through automated behavioral protocols."
+      "1": "ENVIRONMENTAL COST: Keeping the caretaking drone hovering 24/7 creates constant high-pitched noise pollution and burns through lithium batteries that damage local urban wildlife.",
+      "2": "HEALTHCARE FAIRNESS: City welfare algorithms flag any family that refuses the AI Guardian as 'high-risk,' triggering invasive home inspections and cutting their public childcare support.",
+      "3": "PERSONAL FREEDOM: The drone analyzes every cry, facial expression, and hug, replacing spontaneous human warmth with automated soothing routines designed to make the child calmer and more obedient."
     }
   },
   {
     "id": 4,
-    "title": "Directive 04: Synaptic REM Pre-Loading",
+    "title": "Case 04: Sleep-Learning Brain Stream",
     "choices": [
-      { "id": "A", "text": "Initiate Synaptic Stream" },
-      { "id": "B", "text": "Allow Natural Maturation" }
+      { "id": "A", "text": "Start Sleep-Learning" },
+      { "id": "B", "text": "Let the Brain Grow Naturally" }
     ],
     "perspectives": {
-      "1": "ECOLOGICAL IMPACT: Cryogenic server nodes required for deep cognitive streaming consume energy equivalent to an entire neighborhood's winter power reserve.",
-      "2": "SOCIAL TRIAGE: Early cognitive acceleration will widen the generational socioeconomic divide, pricing non-enhanced infants out of foundational development opportunities.",
-      "3": "DATA AUTONOMY: The curriculum is optimized by a state productivity model, conditioning the infant for predetermined economic roles before individual self-determination forms."
+      "1": "ENVIRONMENTAL COST: The supercooled servers needed to stream knowledge into the baby's sleeping brain consume as much electricity as an entire neighborhood uses during winter.",
+      "2": "HEALTHCARE FAIRNESS: Refusing this cognitive boost risks leaving the child far behind peers whose families use neural streaming, while approving it deepens the gap between enhanced and natural children.",
+      "3": "PERSONAL FREEDOM: The sleep-learning program is designed by a state economic algorithm that quietly shapes the baby's talents and desires toward future labor shortages before the child can ever choose their own path."
     }
   },
   {
     "id": 5,
-    "title": "Directive 05: Synthetic Bio-Nutrient Matrix",
+    "title": "Case 05: Lab-Engineered Nutrition",
     "choices": [
-      { "id": "A", "text": "Administer Synthetic Matrix" },
-      { "id": "B", "text": "Pursue Natural Adaptation" }
+      { "id": "A", "text": "Feed the Lab Formula" },
+      { "id": "B", "text": "Stick to Natural Food" }
     ],
     "perspectives": {
-      "1": "ECOLOGICAL IMPACT: Cultivating the bio-synthetic nutrient algae in mono-culture bioreactors demands excessive phosphorus, depleting regenerative agricultural reserves.",
-      "2": "SOCIAL TRIAGE: High subsidy costs for this single infant's nutritional formula drain the municipal pediatric budget, forcing price hikes on standard pediatric medicines.",
-      "3": "DATA AUTONOMY: The synthetic formula alters the infant's gut microbiome to process only patented food compounds, locking the child into lifetime consumer dependency on one conglomerate."
+      "1": "ENVIRONMENTAL COST: Growing the synthetic algae for this formula in industrial vats drains massive amounts of phosphorus from the soil, weakening farmland needed for local food crops.",
+      "2": "HEALTHCARE FAIRNESS: Subsidizing this tailored formula for one infant drains the city's children's clinic budget, forcing price increases on everyday medicine for hundreds of other families.",
+      "3": "PERSONAL FREEDOM: The engineered formula permanently rewires the baby's digestion so their body can only process patented nutrients, locking them into buying food from one corporation for life."
     }
   }
 ]
