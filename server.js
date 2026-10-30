@@ -262,9 +262,12 @@ function assignSlotOrQueue(socket) {
 }
 
 function removeSocket(socketId) {
+  let stateChanged = false;
+
   // Clean up any pending mid-game prompt
   if (gameState.pendingMidGame[socketId]) {
     delete gameState.pendingMidGame[socketId];
+    stateChanged = true;
   }
 
   // Remove from active slots
@@ -274,6 +277,7 @@ function removeSocket(socketId) {
       gameState.players[slot] = null;
       gameState.votes[slot] = null;
       removedFromActiveSlot = true;
+      stateChanged = true;
       console.log(`[SLOT] Socket ${socketId} disconnected from Slot ${slot}`);
 
       // Only auto-promote from queue if in lobby/ready
@@ -289,8 +293,12 @@ function removeSocket(socketId) {
   const qIdx = gameState.queue.indexOf(socketId);
   if (qIdx !== -1) {
     gameState.queue.splice(qIdx, 1);
+    stateChanged = true;
     console.log(`[QUEUE] Socket ${socketId} removed from queue`);
   }
+
+  // If a passive observer disconnected before ever joining, no state changed
+  if (!stateChanged) return;
 
   // If an active player disconnected mid-round, check if remaining active players have all voted
   if (removedFromActiveSlot && gameState.status === 'active') {
@@ -615,10 +623,13 @@ function resetSession(promoteWaiting = false) {
 
 // --- Socket.io Event Handling ---
 io.on('connection', (socket) => {
-  console.log(`[SOCKET] Connected: ${socket.id}`);
+  console.log(`[SOCKET] Connected (passive observer): ${socket.id}`);
 
-  // Send current state to newly connected host/observers without assigning a player slot
-  broadcastGameState();
+  // Send passive metadata (vital score + footer text) to landing page without assigning a slot
+  socket.emit('passive-init', {
+    happiness: gameState.happiness,
+    settings
+  });
 
   // 1. Explicit Role Registration: Local Hardware Hub
   socket.on('register-hub', () => {
@@ -636,8 +647,8 @@ io.on('connection', (socket) => {
     broadcastGameState();
   });
 
-  // 3. Explicit Player Join (ONLY mobile player UI emits 'join-game')
-  socket.on('join-game', () => {
+  // 3. Explicit Opt-In Player Join (Triggered ONLY when user clicks "Join Session")
+  function handleRequestJoin() {
     if (socket.isHub || socket.isHost) return;
     socket.isPlayer = true;
 
@@ -661,7 +672,10 @@ io.on('connection', (socket) => {
     }
 
     broadcastGameState();
-  });
+  }
+
+  socket.on('request-join', handleRequestJoin);
+  socket.on('join-game', handleRequestJoin);
 
   function handleLateJoinChoice(choice) {
     if (socket.isHub || socket.isHost) return;

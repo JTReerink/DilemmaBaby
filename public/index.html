@@ -23,16 +23,32 @@
           <span>Vital State:</span>
           <span class="vital-score" id="vital-score">5/10</span>
         </div>
-        <button class="btn-extend-timer" id="extend-timer-btn" title="Reset idle timer">
+        <button class="btn-extend-timer" id="extend-timer-btn" title="Reset idle timer" style="display: none;">
           ⌛ Extend Time (30s)
         </button>
       </div>
     </header>
 
     <!-- ================================================================= -->
+    <!-- 0. VIEW: OPT-IN LANDING SCREEN                                    -->
+    <!-- ================================================================= -->
+    <div class="view-section screen active" id="screen-landing">
+      <div class="card lobby-box" style="padding: 36px 20px;">
+        <span class="player-slot-badge">Society 5.0 Installation</span>
+        <h2 class="lobby-title" style="font-size: 1.6rem; margin-top: 4px;">Dilemma Baby</h2>
+        <p class="lobby-status-msg" style="max-width: 320px; margin-bottom: 10px;">
+          Step up to the incubator to participate as an active co-custodian and shape the baby's vital harmony.
+        </p>
+        <button id="btn-initial-join" class="btn-main btn-primary" style="font-size: 1.05rem; padding: 16px; margin-top: 8px;">
+          Join Session
+        </button>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
     <!-- 1. VIEW: CONNECTING / RENDER COLD-START                           -->
     <!-- ================================================================= -->
-    <section class="view-section active" id="view-connecting">
+    <section class="view-section" id="view-connecting">
       <div class="card connecting-box">
         <div class="spinner"></div>
         <h2 class="connecting-title">Connecting to Bio-Server...</h2>

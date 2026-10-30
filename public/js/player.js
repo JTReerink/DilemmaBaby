@@ -12,6 +12,8 @@
   const btnExtendTime = document.getElementById('extend-timer-btn') || document.getElementById('btn-extend-time');
 
   // Views
+  const screenLanding = document.getElementById('screen-landing');
+  const btnInitialJoin = document.getElementById('btn-initial-join');
   const viewConnecting = document.getElementById('view-connecting');
   const viewQueue = document.getElementById('view-queue');
   const viewLobby = document.getElementById('view-lobby');
@@ -77,6 +79,7 @@
   const btnImHere = document.getElementById('btn-im-here');
 
   // --- Local State ---
+  let hasOptedIn = false;
   let mySlot = null;
   let isQueued = false;
   let isPendingLateJoin = false;
@@ -101,6 +104,7 @@
   // Helper: Switch Active View (modals are separate overlays, not view-sections)
   function showView(target) {
     [
+      screenLanding,
       viewConnecting,
       viewQueue,
       viewLobby,
@@ -124,29 +128,66 @@
   socket.on('connect', () => {
     if (sessionFinished) return;
     console.log('[SOCKET] Connected to bio-server with ID:', socket.id);
-    // Explicitly join as a mobile player (prevents hub/host from being counted as players)
-    socket.emit('join-game');
+    // Only request a slot if the user has already clicked "Join Session" (e.g. reconnecting after brief drop)
+    if (hasOptedIn) {
+      socket.emit('request-join');
+    } else {
+      showView(screenLanding);
+    }
   });
 
   socket.on('connect_error', (err) => {
     if (sessionFinished) return;
     console.warn('[SOCKET] Connecting to cloud instance...', err.message);
-    showView(viewConnecting);
+    if (hasOptedIn) {
+      showView(viewConnecting);
+    }
   });
 
   socket.on('disconnect', () => {
     if (sessionFinished) return;
     console.warn('[SOCKET] Disconnected. Reconnecting...');
-    showView(viewConnecting);
+    if (hasOptedIn) {
+      showView(viewConnecting);
+    }
   });
 
-  // --- Initialization ---
+  // Passive metadata for landing screen (vital score & footer text without assigning a slot)
+  socket.on('passive-init', (data) => {
+    if (sessionFinished) return;
+    if (data && typeof data.happiness === 'number' && vitalScoreEl) {
+      vitalScoreEl.textContent = `${data.happiness}/10`;
+    }
+    if (data && data.settings) {
+      settings = data.settings;
+      if (footerTextEl && settings.footerText) {
+        footerTextEl.textContent = settings.footerText;
+      }
+    }
+  });
+
+  // --- Opt-In Landing Button ("Join Session") ---
+  if (btnInitialJoin) {
+    btnInitialJoin.addEventListener('click', () => {
+      hasOptedIn = true;
+      btnInitialJoin.disabled = true;
+      btnInitialJoin.textContent = 'Joining...';
+      socket.emit('request-join');
+    });
+  }
+
+  // --- Initialization (After User Clicks "Join Session") ---
   socket.on('init-state', (data) => {
     if (sessionFinished) return;
+    hasOptedIn = true;
     mySlot = data.slot;
     isQueued = !!data.isQueued;
     isPendingLateJoin = !!data.pendingMidGame;
     settings = data.settings || {};
+    if (btnInitialJoin) {
+      btnInitialJoin.disabled = false;
+      btnInitialJoin.textContent = 'Join Session';
+    }
     if (lobbyRejoinBox) lobbyRejoinBox.style.display = 'none';
     if (isPendingLateJoin) {
       showMidGameModal(true);
@@ -156,6 +197,7 @@
 
   socket.on('assigned-slot', (data) => {
     if (sessionFinished) return;
+    hasOptedIn = true;
     mySlot = data.slot;
     isQueued = false;
     isPendingLateJoin = false;
@@ -165,36 +207,32 @@
     console.log('[SLOT] Assigned to Slot:', mySlot);
   });
 
-  // --- Host Force Lobby Reset (Kicks all players back to lobby screen) ---
+  // --- Host Force Lobby Reset (Kicks all players back to Opt-In Landing Screen) ---
   socket.on('lobby-force-reset', () => {
-    console.log('[RESET] Host reset the lobby. Clearing local slot state.');
+    console.log('[RESET] Host reset the lobby. Returning to opt-in landing screen.');
     sessionFinished = false;
+    hasOptedIn = false;
     mySlot = null;
     isQueued = false;
     isPendingLateJoin = false;
     myVote = null;
 
+    stopContinuousTimer();
     hideInactivityModal();
     showMidGameModal(false);
 
+    if (btnExtendTime) btnExtendTime.style.display = 'none';
     if (vitalScoreEl) vitalScoreEl.textContent = '5/10';
-    showView(viewLobby);
-
-    if (lobbySlotBadge) lobbySlotBadge.textContent = 'Lobby Reset';
-    if (slotInd1) slotInd1.classList.remove('active');
-    if (slotInd2) slotInd2.classList.remove('active');
-    if (slotInd3) slotInd3.classList.remove('active');
-
-    if (lobbyStatusMsg) {
-      lobbyStatusMsg.textContent = 'Lobby was reset by the facilitator. Tap below to join the session.';
+    if (btnInitialJoin) {
+      btnInitialJoin.disabled = false;
+      btnInitialJoin.textContent = 'Join Session';
     }
-    if (lobbyActionBox) lobbyActionBox.style.display = 'none';
-    if (lobbyRejoinBox) lobbyRejoinBox.style.display = 'block';
+    showView(screenLanding);
   });
 
   // --- Game State Broadcast ---
   socket.on('game-state', (state) => {
-    if (sessionFinished) return;
+    if (sessionFinished || !hasOptedIn) return;
     latestState = state;
     if (state.settings) settings = state.settings;
     if (state.assignedSlot) {
@@ -212,7 +250,7 @@
 
   // --- Main State Visualizer ---
   function updateFromState(state) {
-    if (!state || sessionFinished) return;
+    if (!state || sessionFinished || !hasOptedIn) return;
 
     // 1. Update Happiness & Footer Text
     if (vitalScoreEl) {
